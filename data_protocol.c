@@ -23,7 +23,7 @@ u_int8_t cmd[5];
 u_int8_t buf[255];
 
 void send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
-  if (sender == 0) { //Emitter
+  if (sender == TRANSMITTER) { //Emitter
     switch (command) {
       case 0: // SET
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_SET;
@@ -54,7 +54,7 @@ void send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
         cmd[3] = BCC_REJ_ZERO; cmd[4] = FLAG;
         break;
     }
-  } else if (sender == 1) { // Sender
+  } else if (sender == RECEIVER) { // Sender
     switch (command) {
       case 0: // DISC
         cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_DISC;
@@ -111,7 +111,7 @@ void atende() // atende alarme--->emissor(writenonical.c)
 {
   if (!got_CMD)
   {
-    send_cmd(2, 0);
+    send_cmd(2, TRANSMITTER);
     printf("alarme # %d\n", conta);
     conta++;
     if (conta < 4)
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
   {
     signal(SIGALRM, atende); //instala rotina que atende interrupção
 
-    send_cmd(0, 0); //Send SET
+    send_cmd(0, TRANSMITTER); //Send SET
 
     alarm(3);
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
     if (ACK == 0x00)
     { //Send UA
-      send_cmd(2, 1);
+      send_cmd(2, RECEIVER);
     }
     else
     { //the message isn't correct

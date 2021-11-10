@@ -43,3 +43,6 @@
 #define ESC 0x7D
 #define FLAG_FOUND 0x5E    //FLAG ^ 0x20
 #define ESC_FOUND 0x5D  //ESC ^ 0x20
+
+#define TRANSMITTER 0
+#define RECEIVER 1
