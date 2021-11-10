@@ -22,7 +22,7 @@ int fd;
 u_int8_t cmd[5];
 u_int8_t buf[255];
 
-void send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
+int send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
   if (sender == TRANSMITTER) { //Emitter
     switch (command) {
       case 0: // SET
@@ -73,11 +73,11 @@ void send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
   if (res == -1)
   {
     printf("ERROR IN SENDING.\n");
-    exit(1);
   }
+  return res;
 }
 
-void read_cmd()
+int read_cmd()
 { //emissor (writenoncanonical.c)
   int i = 0;
   int res;
@@ -89,7 +89,7 @@ void read_cmd()
     if (res == -1)
     {
       printf("ERROR\n");
-      exit(1);
+      return res;
     }
     if (i == 0 && byte_received != FLAG)
     {
@@ -105,6 +105,7 @@ void read_cmd()
   got_CMD = TRUE;
 
   printf("I JUST RECEIVED THIS COMMAND: %d | %d | %d | %d | %d \n", buf[0], buf[1], buf[2], buf[3], buf[4]);
+  return res;
 }
 
 void atende() // atende alarme--->emissor(writenonical.c)
@@ -201,7 +202,7 @@ int main(int argc, char **argv)
   {
     read_cmd();
 
-    //Check if SET is correct--->Needs to be changed
+    //Check if SET is correct--->Needs to be changed--->idk if we will keep this...
     u_int8_t ACK = buf[1] ^ buf[2] ^ buf[3];
     u_int8_t ua[5] = {FLAG, A_E, C_SET, BCC_SET, FLAG};
 
