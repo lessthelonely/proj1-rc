@@ -52,56 +52,43 @@ void send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
   if (sender == 0) { //Emitter
     switch (command) {
       case 0: // SET
-        BCC = A_E ^ C_SET;
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_SET;
-        cmd[3] = BCC; cmd[4] = FLAG;
+        cmd[3] = BCC_SET; cmd[4] = FLAG;
         break;
       case 1: // DISC
-        BCC = A_E ^ C_DISC;
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_DISC;
-        cmd[3] = BCC; cmd[4] = FLAG;
+        cmd[3] = BCC_DISC_E; cmd[4] = FLAG;
         break;
       case 2: // UA
-        BCC = A_E ^ C_UA;
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_UA;
-        cmd[3] = BCC; cmd[4] = FLAG;
+        cmd[3] = BCC_UA_E; cmd[4] = FLAG;
         break;
       case 3: // RR
-        BCC = A_E ^ C_RR_ONE;
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ONE;
-        cmd[3] = BCC; cmd[4] = FLAG;
+        cmd[3] = BCC_RR_ONE; cmd[4] = FLAG;
         break;
-      case 4:
-        BCC = A_E ^ C_REJ_ONE;
+      case 4: // RR
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ZERO;
+        cmd[3] = BCC_RR_ZERO; cmd[4] = FLAG;
+        break;
+      case 5:
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ONE;
-        cmd[3] = BCC; cmd[4] = FLAG;
+        cmd[3] = BCC_REJ_ONE; cmd[4] = FLAG;
+        break;
+      case 6:
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ZERO;
+        cmd[3] = BCC_REJ_ZERO; cmd[4] = FLAG;
         break;
     }
   } else if (sender == 1) { // Sender
     switch (command) {
-      case 0: // SET
-        BCC = A_R ^ C_SET;
-        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_SET;
-        cmd[3] = BCC; cmd[4] = FLAG;
-        break;
-      case 1: // DISC
-        BCC = A_R ^ C_DISC;
+      case 0: // DISC
         cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_DISC;
-        cmd[3] = BCC; cmd[4] = FLAG;
+        cmd[3] = BCC_DISC_R; cmd[4] = FLAG;
         break;
-      case 2: // UA
+      case 1: // UA
         BCC = A_R ^ C_UA;
         cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_UA;
-        cmd[3] = BCC; cmd[4] = FLAG;
-        break;
-      case 3: // RR
-        BCC = A_R ^ C_RR_ONE;
-        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_RR_ONE;
-        cmd[3] = BCC; cmd[4] = FLAG;
-        break;
-      case 4:
-        BCC = A_R ^ C_REJ_ONE;
-        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_REJ_ONE;
         cmd[3] = BCC; cmd[4] = FLAG;
         break;
     }
@@ -240,9 +227,9 @@ int main(int argc, char **argv)
   {
     read_cmd();
 
-    //Check if SET is correct
+    //Check if SET is correct--->Needs to be changed
     u_int8_t ACK = buf[1] ^ buf[2] ^ buf[3];
-    u_int8_t ua[5] = {FLAG, A_E, C_SET, BCC, FLAG};
+    u_int8_t ua[5] = {FLAG, A_E, C_SET, BCC_SET, FLAG};
 
     if (ACK == 0x00)
     { //Send UA
