@@ -8,8 +8,15 @@
 #include <signal.h>
 
 #define FLAG 0x7E
-#define A 0x01
-#define C 0x03
+#define A_E 0x03 //Comandos do Emissor e Respostas do Receptor
+#define A_R 0x01 //Comandos do Receptor e Respostas do Emissor
+#define C_SET 0x03
+#define C_DISC 0x0B
+#define C_UA 0x07
+#define C_RR_ONE 0x85
+#define C_RR_ZERO 0x05
+#define C_REJ_ONE 0x11
+#define C_REJ_ZERO 0x01
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -19,10 +26,10 @@
 volatile int STOP=FALSE;
 int got_UA = FALSE;
 
-const u_int8_t BCC = A ^ C;  //BCC=XOR(A,C)
+const u_int8_t BCC = A_E ^ C_SET;  //BCC=XOR(A,C)
 int flag =1, conta=1;
 int fd;
-u_int8_t set[5] = {FLAG, A, C, BCC, FLAG};
+u_int8_t set[5] = {FLAG, A_E, C_SET, BCC, FLAG};
 
 void send_set(){ //emissor (writenoncanonical.c)
   int res;
@@ -173,7 +180,7 @@ int main(int argc, char** argv)
 
         //Check if SET is correct
         u_int8_t ACK = buf[1] ^ buf[2] ^ buf[3];
-        u_int8_t ua[5]={FLAG,A,C,BCC,FLAG};
+        u_int8_t ua[5]={FLAG,A_E,C_SET,BCC,FLAG};
 
         if(ACK == 0x00){ //Send UA
           res=0;
