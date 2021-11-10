@@ -24,29 +24,86 @@
 #define TRUE 1
 
 volatile int STOP = FALSE;
-int got_UA = FALSE;
+int got_CMD = FALSE;
+u_int8_t BCC; //BCC=XOR(A,C)
 
-const u_int8_t BCC = A_E ^ C_SET; //BCC=XOR(A,C)
 int flag = 1, conta = 1;
 int fd;
-u_int8_t set[5] = {FLAG, A_E, C_SET, BCC, FLAG};
+u_int8_t cmd[5];
+u_int8_t buf[255];
 
-void send_set()
-{ //emissor (writenoncanonical.c)
-  int res;
-  res = write(fd, set, sizeof(set));
+void send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
+  if (sender == 0) { //Emitter
+    switch (command) {
+      case 0: // SET
+        BCC = A_E ^ C_SET;
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_SET;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 1: // DISC
+        BCC = A_E ^ C_DISC;
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_DISC;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 2: // UA
+        BCC = A_E ^ C_UA;
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_UA;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 3: // RR
+        BCC = A_E ^ C_RR_ONE;
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ONE;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 4:
+        BCC = A_E ^ C_REJ_ONE;
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ONE;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+    }
+  } else if (sender == 1) { // Sender
+    switch (command) {
+      case 0: // SET
+        BCC = A_R ^ C_SET;
+        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_SET;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 1: // DISC
+        BCC = A_R ^ C_DISC;
+        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_DISC;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 2: // UA
+        BCC = A_R ^ C_UA;
+        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_UA;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 3: // RR
+        BCC = A_R ^ C_RR_ONE;
+        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_RR_ONE;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 4:
+        BCC = A_R ^ C_REJ_ONE;
+        cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_REJ_ONE;
+        cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+    }
+  }
+  
+  printf("I'M SENDING THIS COMMAND: %d | %d | %d | %d | %d \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
+  int res = write(fd, cmd, sizeof(cmd));
   if (res == -1)
   {
-    printf("ERROR\n");
+    printf("ERROR IN SENDING.\n");
     exit(1);
   }
 }
 
-void read_ua()
+void read_cmd()
 { //emissor (writenoncanonical.c)
   int i = 0;
   int res;
-  u_int8_t buf[255];
 
   while (STOP == FALSE)
   { /* loop for input */
@@ -68,20 +125,16 @@ void read_ua()
     buf[i++] = byte_received; /* so we can printf... */
   }
 
-  got_UA = TRUE;
+  got_CMD = TRUE;
 
-  printf("Printing UA:\n");
-  for (int j = 0; j < 5; j++)
-  {
-    printf("%u\n", buf[j]);
-  }
+  printf("I JUST RECEIVED THIS COMMAND: %d | %d | %d | %d | %d \n", buf[0], buf[1], buf[2], buf[3], buf[4]);
 }
 
 void atende() // atende alarme--->emissor(writenonical.c)
 {
-  if (!got_UA)
+  if (!got_CMD)
   {
-    send_set();
+    send_cmd(2, 0);
     printf("alarme # %d\n", conta);
     conta++;
     if (conta < 4)
@@ -156,45 +209,20 @@ int main(int argc, char **argv)
 
   printf("New termios structure set\n");
 
-  if (strcmp("/dev/ttyS10", argv[1]) == 0)
+  if (strcmp("/dev/ttyS10", argv[1]) == 0) // Emissor
   {
-
     signal(SIGALRM, atende); //instala rotina que atende interrupção
 
-    send_set(); //Send SET
+    send_cmd(0, 0); //Send SET
 
     alarm(3);
 
-    read_ua(); //Receive UA
+    read_cmd(); //Receive UA
   }
 
-  if (strcmp("/dev/ttyS11", argv[1]) == 0)
+  if (strcmp("/dev/ttyS11", argv[1]) == 0) // Recetor
   {
-    int res;
-    u_int8_t buf[255];
-    //Receive SET
-    int i = 0;
-    while (STOP == FALSE)
-    { /* loop for input */
-      u_int8_t byte_received;
-      res = read(fd, &byte_received, 1); /* returns after 5 chars have been input */
-      if (res == -1)
-      {
-        printf("ERROR\n");
-        exit(1);
-      }
-      if (i > 0 && byte_received == FLAG)
-      { //last byte sent by SET
-        STOP = TRUE;
-      }
-      buf[i++] = byte_received; /* so we can printf... */
-    }
-
-    printf("Printing SET:\n");
-    for (int j = 0; j < 5; j++)
-    {
-      printf("%u\n", buf[j]);
-    }
+    read_cmd();
 
     //Check if SET is correct
     u_int8_t ACK = buf[1] ^ buf[2] ^ buf[3];
@@ -202,13 +230,7 @@ int main(int argc, char **argv)
 
     if (ACK == 0x00)
     { //Send UA
-      res = 0;
-      res = write(fd, ua, sizeof(ua));
-      if (res == -1)
-      {
-        printf("ERROR\n");
-        exit(1);
-      }
+      send_cmd(2, 1);
     }
     else
     { //the message isn't correct
