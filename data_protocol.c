@@ -121,7 +121,7 @@ void atende() // atende alarme--->emissor(writenonical.c)
     }
     else
     {
-      printf("ERROR - Timeout over. It wasn't possible to receive UA successfully\n");
+      printf("ERROR - Timeout over. It wasn't possible to receive command successfully\n");
       exit(1);
     }
   }

@@ -7,9 +7,10 @@
 #include "constants.h"
 #include "data_protocol.h"
 
+struct termios oldtio, newtio;
+
 /*Returns fd or -1 in case of error*/
 int llopen(char* porta,int sender){ //Slides uses int porta but it's more practical in char* because it's serial ports are in char*
-    struct termios oldtio, newtio;
     int fd;
     if(sender != TRANSMITTER || sender != RECEIVER){ //sender will be TRANSMITTER or RECEIVER
         printf("ERROR"); 
@@ -88,6 +89,63 @@ int llread(int fd,char*buffer){
 
 }
 
-int llclose(int fd){
+//need to send DISC message and get that message back and then send UA 
+//also close fd of course
+//in slides llclose just has fd as a parameter but we probably should specify if whoever called this function
+//since transmitter has to send DISC to receiver, however receiver doesn't have to do that
+//need to do alarm + timeout each time
+int llclose(int fd, int sender){
+  int check=-1,conta=0;
+  if(sender != TRANSMITTER || sender != RECEIVER){ //sender will be TRANSMITTER or RECEIVER
+      printf("ERROR"); 
+    }
+  
+  if(sender == TRANSMITTER){
+    while(check < 0 && conta < 3){
+    if((check=send_cmd(1,TRANSMITTER))<0){ //send DISC
+        //send again every 3 seconds for 3 times
+        sleep(3);
+        conta++;
+    }
+    else{
+      conta = 0;
+    }
+    if(read_cmd()<0){ //read DISC
+       //should it try to send it again?
+       printf("Couldn't read DISC message");
+    }
+    if(send_cmd(2,TRANSMITTER)<0){ //send UA
+       //receiver doesn't have to send it back so we don't have to do the timeout to make sure it was sent?
+       printf("Couldn't send UA message");
+    }
+    }
+  }
+  else{
+     while(check < 0 && conta < 3){
+    if(read_cmd()<0){ //read DISC
+       printf("Couldn't read DISC message");
+    }
+    if(send_cmd(1,TRANSMITTER)<0){ //send DISC back as a response
+        //Do we have to do timeout for receiver, we were told we had to for trasmitter
+        sleep(3);
+        conta++;
+    }
+    else{
+      conta = 0;
+    }
+    if(read_cmd()<0){ //read UA
+       printf("Couldn't read UA messages");
+    }
+    }
+  }
 
+  //close fd
+   sleep(1);
+   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
+  {
+    perror("tcsetattr");
+    return -1;
+  }
+  close(fd);
+  return 0;
 }
