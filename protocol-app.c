@@ -56,6 +56,8 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
     return -1;
   }
 
+  char*cmd;
+
   if(sender == TRANSMITTER){
         signal(SIGALRM, atende); //instala rotina que atende interrupção
 
@@ -65,14 +67,14 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
 
         alarm(3);
 
-        if(read_cmd()<0){ //Receive UA
+        if(read_cmd(cmd)<0){ //Receive UA
           printf("ERROR");
         }
     }
     else{
 
         //should it have a while here?
-        if(read_cmd()<0){
+        if(read_cmd(cmd)<0){
             printf("ERROR");
         }
         
@@ -100,6 +102,7 @@ int llwrite(int fd, char*buffer,int length){
     return -1;
   }
   int write_length;
+  char*cmd;
   //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
   while(TRUE){ //might need a better condition-->thought for later
      //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
@@ -125,11 +128,30 @@ int llwrite(int fd, char*buffer,int length){
      //do I need to check if RR_one is sent when sequence number is one and all that?
      //Maybe it's better
 
-        if(read_cmd()<0){ //Receive UA
-          printf("ERROR");
-        }
-    }
+      if(read_cmd(cmd)<0){ //Receive UA
+        printf("ERROR");
+      }
+      else{
+        printf("Command was read sucessfully sequence number %d\n",link_info.sequenceNumber);
+      }
 
+      //RR->means it was accepted
+      if((cmd == C_RR_ZERO && link_info.sequenceNumber == 0) || (cmd == C_RR_ONE && link_info.sequenceNumber == 1)){
+        free(trama);
+        if(link_info.sequenceNumber == 0){
+          link_info.sequenceNumber=1;
+        }
+        else{
+          link_info.sequenceNumber=0;
+        }
+        return write_length;
+      }
+
+      if((cmd == C_REJ_ZERO && link_info.sequenceNumber == 0) || (cmd == C_REJ_ONE && link_info.sequenceNumber == 1)){
+        printf("Received REJ\n");
+        return -1; //wait is it consider error if we get REJ?
+      }
+    }
 }
 
 int llread(int fd,char*buffer){
@@ -143,6 +165,7 @@ int llread(int fd,char*buffer){
 //need to do alarm + timeout each time
 int llclose(int fd, int sender){
   int check=-1,conta=0;
+  char*cmd;
   if(sender != TRANSMITTER || sender != RECEIVER){ //sender will be TRANSMITTER or RECEIVER
       printf("ERROR"); 
     }
@@ -157,7 +180,7 @@ int llclose(int fd, int sender){
     else{
       conta = 0;
     }
-    if(read_cmd()<0){ //read DISC
+    if(read_cmd(cmd)<0){ //read DISC
        //should it try to send it again?
        printf("Couldn't read DISC message");
     }
@@ -169,7 +192,7 @@ int llclose(int fd, int sender){
   }
   else{
      while(check < 0 && conta < 3){
-    if(read_cmd()<0){ //read DISC
+    if(read_cmd(cmd)<0){ //read DISC
        printf("Couldn't read DISC message");
     }
     if(send_cmd(1,TRANSMITTER)<0){ //send DISC back as a response
@@ -180,7 +203,7 @@ int llclose(int fd, int sender){
     else{
       conta = 0;
     }
-    if(read_cmd()<0){ //read UA
+    if(read_cmd(cmd)<0){ //read UA
        printf("Couldn't read UA messages");
     }
     }

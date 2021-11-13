@@ -5,6 +5,8 @@
 #include <termios.h>
 #include <stdio.h>
 #include <signal.h>
+
+#include "data_protocol.h"
 #include "constants.h"
 
 #define BAUDRATE B38400
@@ -13,7 +15,6 @@
 #define FALSE 0
 #define TRUE 1
 
-volatile int STOP = FALSE;
 int got_CMD = FALSE;
 u_int8_t BCC; //BCC=XOR(A,C)
 
@@ -77,15 +78,15 @@ int send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
   return res;
 }
 
-int read_cmd()
+/*int read_cmd()
 { //emissor (writenoncanonical.c)
   int i = 0;
   int res;
 
   while (STOP == FALSE)
-  { /* loop for input */
+  { 
     u_int8_t byte_received;
-    res = read(fd, &byte_received, 1); /* returns after 5 chars have been input */
+    res = read(fd, &byte_received, 1);
     if (res == -1)
     {
       printf("ERROR\n");
@@ -99,13 +100,82 @@ int read_cmd()
     { //last byte sent by SET
       STOP = TRUE;
     }
-    buf[i++] = byte_received; /* so we can printf... */
+    buf[i++] = byte_received; 
   }
 
   got_CMD = TRUE;
 
   printf("I JUST RECEIVED THIS COMMAND: %d | %d | %d | %d | %d \n", buf[0], buf[1], buf[2], buf[3], buf[4]);
   return res;
+}*/
+
+int read_cmd(char* cmd){
+  char byte_received;
+  int res;
+  messageState state = START;
+  //should check the value of BCC in order to see if we can move on to BCC_OK state
+  static int is_bcc_okay = 0;
+
+  while(TRUE){
+    if(res=read(fd,&byte_received,1) < 0){
+      printf("ERROR\n");
+      return res;
+    }
+
+  switch(state){
+    case START:
+      if(byte_received == FLAG){
+        is_bcc_okay = 0;
+        state=FLAG_RCV;
+      }
+      break;
+    case FLAG_RCV:
+      if(byte_received == A_E || byte_received == A_R){
+        is_bcc_okay ^= byte_received;
+        state=A_RCV;
+      }
+      if(byte_received != FLAG){ //according to the teacher's state machine if it's a FLAG we should stay in this state if not we should go to START
+        state = START;
+      }
+      break;
+    case A_RCV:
+      if(byte_received == C_UA || byte_received == C_REJ_ONE || byte_received == C_REJ_ZERO || byte_received == C_RR_ONE || byte_received == C_RR_ZERO || byte_received == C_SET){
+        *cmd = byte_received; //need this to know how the previous message was received
+        is_bcc_okay ^= byte_received;
+        state=C_RCV;
+      }
+      else if(byte_received == FLAG){
+        state=FLAG_RCV;
+      }
+      else{
+        state = START;
+      }
+      break;
+    case C_RCV:
+      is_bcc_okay ^=byte_received;
+      if(is_bcc_okay == 0){
+        state= BCC_OK;
+      }
+      else if(byte_received == FLAG){
+        state=FLAG_RCV;
+      }
+      else{
+        state = START;
+      }
+      break;
+    case BCC_OK:
+      if(byte_received == FLAG){
+        state=STOP;
+      }
+      else{
+        state=START;
+      }
+      break;
+    case STOP:
+      res=0;
+      return res;
+  }
+  }
 }
 
 void atende() // atende alarme--->emissor(writenonical.c)
@@ -127,6 +197,7 @@ void atende() // atende alarme--->emissor(writenonical.c)
   }
 }
 
+/*
 int main(int argc, char **argv)
 {
   int c;
@@ -143,10 +214,7 @@ int main(int argc, char **argv)
 
   // /dev/ttyS10 is emissor and /dev/ttyS11 is receiver
 
-  /*
-    Open serial port device for reading and writing and not as controlling tty
-    because we don't want to get killed if linenoise sends CTRL-C.
-  */
+  
 
   fd = open(argv[1], O_RDWR | O_NOCTTY);
   if (fd < 0)
@@ -156,7 +224,7 @@ int main(int argc, char **argv)
   }
 
   if (tcgetattr(fd, &oldtio) == -1)
-  { /* save current port settings */
+  { 
     perror("tcgetattr");
     exit(-1);
   }
@@ -166,17 +234,10 @@ int main(int argc, char **argv)
   newtio.c_iflag = IGNPAR;
   newtio.c_oflag = 0;
 
-  /* set input mode (non-canonical, no echo,...) */
   newtio.c_lflag = 0;
 
-  newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-  newtio.c_cc[VMIN] = 5;  /* blocking read until 5 chars received */
-
-  /* 
-    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    leitura do(s) pr�ximo(s) caracter(es)
-  */
-
+  newtio.c_cc[VTIME] = 0; 
+  newtio.c_cc[VMIN] = 5;  
   tcflush(fd, TCIOFLUSH);
 
   if (tcsetattr(fd, TCSANOW, &newtio) == -1)
@@ -224,4 +285,4 @@ int main(int argc, char **argv)
   }
   close(fd);
   return 0;
-}
+}*/
