@@ -56,7 +56,7 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
     return -1;
   }
 
-    if(sender == TRANSMITTER){
+  if(sender == TRANSMITTER){
         signal(SIGALRM, atende); //instala rotina que atende interrupção
 
         if(send_cmd(0, TRANSMITTER)<0){ //Send SET
@@ -104,9 +104,30 @@ int llwrite(int fd, char*buffer,int length){
   while(TRUE){ //might need a better condition-->thought for later
      //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
      write_length = create_info_trauma(buffer,trama,length);
-     
 
-  }
+     signal(SIGALRM, atende); //instala rotina que atende interrupção
+
+     //not gonna call send_cmd because info trama is a special case
+     if(write(fd,trama,write_length)<0){
+       printf("ERROR");
+     }
+     else{ 
+       //Okay only TRANSMITTER sends info trama however it can send sequence number 0 or 1
+       //Sends sequence number 0 first and then number 1 (slide 14 Ns=0/1)
+         printf("TRANSMITTER sent sucessfully sequence number %d\n",link_info.sequenceNumber);
+     }
+     alarm(3);
+
+     //need to change read_cmd in order for it to return the command that was written
+     //need to know if receiver sent back a RR or REJ
+     //do I need to check if RR_one is sent when sequence number is one and all that?
+     //Maybe it's better
+
+        if(read_cmd()<0){ //Receive UA
+          printf("ERROR");
+        }
+    }
+
 }
 
 int llread(int fd,char*buffer){

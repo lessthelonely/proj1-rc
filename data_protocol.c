@@ -37,22 +37,6 @@ int send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
         cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_UA;
         cmd[3] = BCC_UA_E; cmd[4] = FLAG;
         break;
-      case 3: // RR
-        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ONE;
-        cmd[3] = BCC_RR_ONE; cmd[4] = FLAG;
-        break;
-      case 4: // RR
-        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ZERO;
-        cmd[3] = BCC_RR_ZERO; cmd[4] = FLAG;
-        break;
-      case 5:
-        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ONE;
-        cmd[3] = BCC_REJ_ONE; cmd[4] = FLAG;
-        break;
-      case 6:
-        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ZERO;
-        cmd[3] = BCC_REJ_ZERO; cmd[4] = FLAG;
-        break;
     }
   } else if (sender == RECEIVER) { // Sender
     switch (command) {
@@ -64,6 +48,22 @@ int send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
         BCC = A_R ^ C_UA;
         cmd[0] = FLAG; cmd[1] = A_R; cmd[2] = C_UA;
         cmd[3] = BCC; cmd[4] = FLAG;
+        break;
+      case 2: // RR
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ONE;
+        cmd[3] = BCC_RR_ONE; cmd[4] = FLAG;
+        break;
+      case 3: // RR
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_RR_ZERO;
+        cmd[3] = BCC_RR_ZERO; cmd[4] = FLAG;
+        break;
+      case 4:
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ONE;
+        cmd[3] = BCC_REJ_ONE; cmd[4] = FLAG;
+        break;
+      case 5:
+        cmd[0] = FLAG; cmd[1] = A_E; cmd[2] = C_REJ_ZERO;
+        cmd[3] = BCC_REJ_ZERO; cmd[4] = FLAG;
         break;
     }
   }
