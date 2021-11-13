@@ -12,6 +12,7 @@
 #define FALSE 0
 #define TRUE 1
 #define BIT(n) 1 << n
+#define MAX_SIZE 255
 
 #define FLAG 0x7E
 
