@@ -1,3 +1,6 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -47,3 +50,5 @@
 
 #define TRANSMITTER 0
 #define RECEIVER 1
+
+#endif

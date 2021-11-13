@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "data_protocol.h"
 #include "stuffing.h"
+#include "app.h"
 
 struct termios oldtio, newtio;
 
@@ -98,10 +99,12 @@ int llwrite(int fd, char*buffer,int length){
     printf("Value should be positive in order to actually transfer data\n");
     return -1;
   }
+  int write_length;
   //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
   while(TRUE){ //might need a better condition-->thought for later
      //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
-
+     write_length = create_info_trauma(buffer,trama,length);
+     
 
   }
 }
@@ -171,7 +174,7 @@ int llclose(int fd, int sender){
   return 0;
 }
 
-int create_info_trauma(char*buffer,char*trauma,int length){
+int create_info_trauma(char*buffer,char*trama,int length){
   /* Okay like got to add flag, A_E because it's the transmitter that sends info, C_I_ZERO (check slide 14) but wait it's
   C_I_ZERO for the first time, should I make a counter to see if it's the first or second time transmitter is sending the info trama
   doesn't make sense to make a new function just because of that-->let's do it with C_I_ZERO first just to structure it,
@@ -196,8 +199,28 @@ int create_info_trauma(char*buffer,char*trauma,int length){
   }
 
   //We need to stuff the data + BCC2
-  char* frame,bcc2_stuffed;
-  stuffing(buffer,length,&frame); 
-  stuffing(&BCC2,1,&bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
+  char* data_stuffed,bcc2_stuffed;
+  int data_length = stuffing(buffer,length,&data_stuffed); 
+  int bcc2_length = stuffing(&BCC2,1,&bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
   
+  //Assemble info trama 
+  int new_length = data_length + bcc2_length + 5; //5 because F A C BCC1 F
+  trama[0]=FLAG;
+  trama[1]= A_E;
+  if(link_info.sequenceNumber == 0){
+    trama[2]=C_I_ZERO;
+    trama[3]=BCC_C_I_ZERO;
+  }
+  else{
+    trama[2]=C_I_ONE;
+    trama[3]=BCC_C_I_ONE;
+  }
+  
+  memcpy(&trama[4],data_stuffed,data_length);
+  int index_bcc2 = data_length + 4;
+  memcpy(&trama[index_bcc2],bcc2_stuffed,bcc2_length);
+  trama[new_length-1] = FLAG; //second flag is at the end of the frame
+
+  //Need to keep track of pointers to free and think where I can free them
+  return new_length;
 }
