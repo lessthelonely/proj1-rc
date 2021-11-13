@@ -7,7 +7,7 @@
 
 #include "constants.h"
 #include "data_protocol.h"
-#include "link.h"
+#include "stuffing.h"
 
 struct termios oldtio, newtio;
 
@@ -196,5 +196,8 @@ int create_info_trauma(char*buffer,char*trauma,int length){
   }
 
   //We need to stuff the data + BCC2
+  char* frame,bcc2_stuffed;
+  stuffing(buffer,length,&frame); 
+  stuffing(&BCC2,1,&bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
   
 }
