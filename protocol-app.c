@@ -178,13 +178,23 @@ int create_info_trauma(char*buffer,char*trauma,int length){
   BCC1 is BCC_C_I_ZERO(in the case that C==C_I_ZERO), then char*buffer (I think), BCC2 is going to be obtained by a for cycle 
   with every char from the char*buffer array (doing xor in all those guys) and finally adding another flag
 
-  CAREFUL--->this is where byte stuffing comes in (and destuffing)
+  CAREFUL--->this is where bit stuffing comes in (and destuffing)
   Think it's after the info trama is assembled tho because slide 7 says "(antes de stuffing e após destuffing)"
+  
+  Okay new idea about stuffing (and destuffing):
+    We have the original data->this data goes through stuffing before it's sent to the receiver because it's a way to ensure 
+  that the transmission starts and ends at the correct places
+    Receiver gets the trama stuffed, before it stores the information tho, sends the trama to go through the destuffing process
+
+  With that in mind makes sense to have stuffing and destuffing in a separate file (maybe...)
   */
 
-  //Let's start by defining BCC2
-  /*char BCC2 = (*buffer)[0];
+  //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
+  char BCC2 = buffer[0];
   for(int i = 1;i<(length-1);i++){
-    BCC2 ^= (*buffer)[i];
-  }*/
+    BCC2 ^= buffer[i];
+  }
+
+  //We need to stuff the data + BCC2
+  
 }
