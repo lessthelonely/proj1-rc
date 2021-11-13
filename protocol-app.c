@@ -119,6 +119,8 @@ int llwrite(int fd, char*buffer,int length){
      alarm(3);
 
      //need to change read_cmd in order for it to return the command that was written
+     //Not the return...the return still needs to be an int in order to see if there was an error or not
+     //I need to add a parameter to read_cmd, maybe a pointer?
      //need to know if receiver sent back a RR or REJ
      //do I need to check if RR_one is sent when sequence number is one and all that?
      //Maybe it's better
