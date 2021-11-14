@@ -164,8 +164,8 @@ int llread(int fd,char*buffer){
 
   while(TRUE){
     //read info trama-->can't use read_cmd because of the data segment
-    char*info_trama;
-    if(length = read_info_trama(info_trama)<0){
+    char*info_trama,cmd;
+    if(length = read_info_trama(info_trama,cmd)<0){
       //should try to read again?
       //or error?
     }
@@ -200,6 +200,13 @@ enviadas pelo Emissor)->what qualifies as this*/
       else{
         send_cmd(5,TRANSMITTER);
       }
+    }
+    else{
+      /*so I have no idea what duplicate means
+      I thought maybe it was info trama having a C_I_ZERO when the sequence number was one...but not sure
+      I'm gonna do this tho, which means I need to change read_info_trama
+*/
+      
     }
 
 

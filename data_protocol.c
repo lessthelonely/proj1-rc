@@ -101,7 +101,7 @@ Because I'll need to check if BCC2 is correct, if it's not, we need to dump this
 
 Returns -1 in case of error or length of the trama written
 */
-int read_info_trama(char*info_trama){
+int read_info_trama(char*info_trama,char*cmd){
   char byte_received;
   int res;
   messageState state = START;
@@ -135,6 +135,7 @@ int read_info_trama(char*info_trama){
       //C  Campo de Controlo 0 S 0 0 0 0 0 0 S = N(s) -->slide 7
       if(byte_received == C_I_ONE || byte_received == C_I_ZERO){
         is_bcc_okay ^= byte_received;
+        *cmd=byte_received;
         state=C_RCV;
       }
       else if(byte_received == FLAG){
