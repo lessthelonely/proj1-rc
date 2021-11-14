@@ -172,6 +172,37 @@ int llread(int fd,char*buffer){
     else{
       printf("Read successfully info message with sequence number %d\n",link_info.sequenceNumber);
     }
+
+    char*frame;
+    //Need to destuff before storing
+    destuffing(info_trama,length,&frame);
+
+    //Check if BCC2 is correct, if not dump info
+    //First we create BCC2 based on the info and then we check if it matches up with the last bit of info trama (that should be BCC2)
+    char BCC2 = frame[0];
+    for(int i = 1;i<(length-1);i++){
+      BCC2 ^= frame[i];
+    }
+
+    //Why is it important to check BCC2 value?
+    //see slide 11--->if BCC2 is wrong, we send a negative ack (C_REJ_(ZERO/ONE (this depends on the sequence number)))
+    //If it's right, we send positive ACK (C_RR_(ZERO/ONE))
+    //Need to read the duplicate stuff with more attention, now that I'm reading it just briefly
+    if(BCC2 != info_trama[length-1]){
+      printf("Wrong BCC2-->gonna send negative ACK\n");
+      if(link_info.sequenceNumber==0){
+        /*When analyzing the whole program I don't think we will ever use A_R because I don't think receiver sends
+        a command without it being an answer to the transmitter but in those cases we should use A_E
+        ASK THE TEACHER-->when do we use A_R (00000001 (0x01) em Comandos enviados pelo Receptor e Respostas 
+enviadas pelo Emissor)->what qualifies as this*/
+        send_cmd(6,TRANSMITTER);
+      }
+      else{
+        send_cmd(5,TRANSMITTER);
+      }
+    }
+
+
   }
 
 
