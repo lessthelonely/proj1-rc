@@ -33,8 +33,16 @@ int create_data_package(int length, char*data,char*package){
     return 0;
 }
 
-int create_control_package(int c,char* file_name, int length, char*package){
+int create_control_package(int c,char* file_name, int file_size, char*package){
+    package[0] = c; //need to be informed if it's supposed to be the start (2) or end (3)-->should I make constants?
+    /*Going to have two sets of TLV:
+    First one is about the size of the file
+    Second about the name of the file
+    */
 
+    package[1] = 0; //file size (should it be a constant?)
+    package[2] = file_size; //will have to make sure it's in octects I guess
+    
 }
 
 int read_data_package(){}
