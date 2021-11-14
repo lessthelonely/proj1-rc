@@ -92,6 +92,8 @@ In order to make this function work->need to build the information trama
 F A C BCC1 char*buffer? BCC2 F
 
 Return value should -1 in case of error or number of caracters written
+
+TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, char*buffer,int length){
   
@@ -154,8 +156,22 @@ int llwrite(int fd, char*buffer,int length){
     }
 }
 
+/* RECEIVER is the only one who calls this function
+   Return length of array of caracters read or -1 in case of error
+*/
 int llread(int fd,char*buffer){
+  int length;
 
+  while(TRUE){
+    //read info trama-->can't use read_cmd because of the data segment
+    char*info_trama;
+    length = send_info_trama(info_trama);
+  }
+
+
+
+
+  return length;
 }
 
 //need to send DISC message and get that message back and then send UA 

@@ -8,10 +8,12 @@ typedef enum
     A_RCV,
     C_RCV,
     BCC_OK,
+    D_RCV,
     STOP
 } messageState;
 
 int send_cmd(int command, int sender);
+int send_info_trama(char* info_trama);
 int read_cmd();
 int read_cmd(char*cmd);
 void atende();
