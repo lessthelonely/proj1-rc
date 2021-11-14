@@ -10,6 +10,9 @@
 #include "stuffing.h"
 #include "app.h"
 
+#define FALSE 0
+#define TRUE 1
+
 struct termios oldtio, newtio;
 
 /*Returns fd or -1 in case of error*/
@@ -184,38 +187,77 @@ int llread(int fd,char*buffer){
       BCC2 ^= frame[i];
     }
 
-    //Why is it important to check BCC2 value?
-    //see slide 11--->if BCC2 is wrong, we send a negative ack (C_REJ_(ZERO/ONE (this depends on the sequence number)))
-    //If it's right, we send positive ACK (C_RR_(ZERO/ONE))
-    //Need to read the duplicate stuff with more attention, now that I'm reading it just briefly
+    /*Okay let's interpret slide 11:
+    We need to check if BCC2 is right however maybe this is not the first thing we need to do
+    We send REJ if BCC2 is wrong and if info is new
+    We send RR: 1) if BCC2 is wrong but info is duplicated
+                2) if BCC2 is right but info is duplicated-->just dump it afterwards
+                3) if BCC2 is right and info is new-->save it
+    
+    Maybe let's check if info is duplicated first and then see if BCC2 is wrong
+    Never mind, I'll do BCC2 first but think I need a bool 
+    so I have no idea what duplicate means
+    I thought maybe it was info trama having a C_I_ZERO when the sequence number was one...but not sure  
+    */
+
+    int bcc2_is_not_okay = FALSE;
     if(BCC2 != info_trama[length-1]){
       printf("Wrong BCC2-->gonna send negative ACK\n");
-      if(link_info.sequenceNumber==0){
+      bcc2_is_not_okay =TRUE;
+    }
+    
+    //Info is duplicated
+    if((cmd==C_I_ZERO && link_info.sequenceNumber==1) || (cmd==C_I_ONE && link_info.sequenceNumber==0)){
+      if(bcc2_is_not_okay){
+        //Send RR
+        if(link_info.sequenceNumber==0){
         /*When analyzing the whole program I don't think we will ever use A_R because I don't think receiver sends
         a command without it being an answer to the transmitter but in those cases we should use A_E
         ASK THE TEACHER-->when do we use A_R (00000001 (0x01) em Comandos enviados pelo Receptor e Respostas 
-enviadas pelo Emissor)->what qualifies as this*/
-        send_cmd(6,TRANSMITTER);
+        enviadas pelo Emissor)->what qualifies as this*/
+        send_cmd(4,TRANSMITTER);
       }
       else{
-        send_cmd(5,TRANSMITTER);
+        send_cmd(3,TRANSMITTER);
+      }
+      }
+      else{
+        //Send RR & dump info
+        if(link_info.sequenceNumber==0){
+          send_cmd(4,TRANSMITTER);
+        }
+        else{
+        send_cmd(3,TRANSMITTER);
+      }
       }
     }
-    else{
-      /*so I have no idea what duplicate means
-      I thought maybe it was info trama having a C_I_ZERO when the sequence number was one...but not sure
-      I'm gonna do this tho, which means I need to change read_info_trama
-*/
-      
+    else{ //info is new
+       if(bcc2_is_not_okay){
+         //Send REJ
+         if(link_info.sequenceNumber==0){
+          send_cmd(6,TRANSMITTER);
+         }
+         else{
+          send_cmd(5,TRANSMITTER);
+        }
+       }
+       else{
+         //Send RR + store info
+         //Should change sequence number?
+         if(link_info.sequenceNumber==0){
+          send_cmd(4,TRANSMITTER);
+          link_info.sequenceNumber = 1;
+        }
+        else{
+          send_cmd(3,TRANSMITTER);
+          link_info.sequenceNumber = 0;
+       }
+        return length; 
+       }
+
     }
-
-
   }
-
-
-
-
-  return length;
+  return -1;
 }
 
 //need to send DISC message and get that message back and then send UA 
