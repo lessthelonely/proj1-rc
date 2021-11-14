@@ -165,7 +165,13 @@ int llread(int fd,char*buffer){
   while(TRUE){
     //read info trama-->can't use read_cmd because of the data segment
     char*info_trama;
-    length = send_info_trama(info_trama);
+    if(length = read_info_trama(info_trama)<0){
+      //should try to read again?
+      //or error?
+    }
+    else{
+      printf("Read successfully info message with sequence number %d\n",link_info.sequenceNumber);
+    }
   }
 
 
