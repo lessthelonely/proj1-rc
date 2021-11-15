@@ -91,4 +91,35 @@ int read_data_package(char*data,char*package){
     return size;
 }
 
-int read_control_package(){}
+int read_control_package(char*package,char*file_name,int*file_size,int package_size){
+    char*sizes =(char*)malloc(sizeof(int));
+    int size;
+    /*Idk if package is written differently if C is start or end
+    Let's assume it's the same I guess
+    I think if it's start, then you send the data package and if it's stop...you don't? Don't really know*/
+
+    for(int i = 1;i<package_size;i++){
+        if(package[i] == 0){ //file size
+           i++;
+           size=package[i];
+           i++;
+           if(memcpy(sizes,&package[i],size) == NULL){
+               printf("ERROR\n");
+               return -1;
+           }
+           sscanf(sizes,"%d",file_size);
+           i+=size;
+        }
+        if(package[i] == 1){ //file name
+           i++;
+           size=package[i];
+           i++;
+           if(memcpy(file_name,&package[i],size) == NULL){
+               printf("ERROR\n");
+               return -1;
+           }
+           i+=size;
+        }
+        return 0;
+    }
+}
