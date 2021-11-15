@@ -64,6 +64,31 @@ int create_control_package(int c,char* file_name, int file_size, char*package){
     return size;
 }
 
-int read_data_package(){}
+int read_data_package(char*data,char*package){
+    /*Okay package[0] doesn't matter here, will matter where we call it tho
+    should we change the sequence number to whatever sequence number is in package[1]?
+    package[2] & [3] are gonna be used to know the size of the info
+    Rest of the package is gonna be copied into char*data because data
+*/
+    
+    //What if there's more values to sequence number than 0 and 1 and that's why we got the %255 stuff? Idk tbh
+
+    if(link_info.sequenceNumber == 0 && package[1] == "0"){
+        link_info.sequenceNumber = 1;
+    }
+    else if(link_info.sequenceNumber == 1 && package[1] == "1"){
+        link_info.sequenceNumber = 0;
+    }
+    else{
+        return -1; //it's repeated info-->dump?
+    }
+
+    int size = 256*package[2] + package[3];
+    if(memcpy(data,&package[4],size) == NULL){
+        printf("ERROR\n");
+        return -1;
+    }
+    return size;
+}
 
 int read_control_package(){}

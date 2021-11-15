@@ -14,7 +14,7 @@ falha*/
 struct linkLayer link_info;
 
 int create_data_package(int length, char*data,char*package);
-int read_data_package();
+int read_data_package(char* data,char* package);
 int create_control_package(int c,char* file_name, int length, char*package);
 int read_control_package();
 
