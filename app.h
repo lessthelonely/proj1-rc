@@ -11,7 +11,13 @@ struct linkLayer
 falha*/
 };
 
+struct applicationLayer {
+int fileDescriptor; /*Descritor correspondente à porta série*/
+int status; /*TRANSMITTER | RECEIVER*/
+};
+
 struct linkLayer link_info;
+struct applicationLayer app_info;
 
 int create_data_package(int length, char*data,char*package);
 int read_data_package(char* data,char* package);
