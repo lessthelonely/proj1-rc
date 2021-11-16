@@ -41,7 +41,7 @@ Which is better: waste resources with a for cycle or waste it with allocating me
         }
         new_size++;
     }
-
+    free(frame);
     return new_size; 
 }
 
@@ -68,5 +68,6 @@ int destuffing(char* buffer, int length, char** frame) {
         new_size++;
     }
 
+    free(frame);
     return new_size; 
 }

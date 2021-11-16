@@ -46,29 +46,27 @@ int main(int argc, char** argv){
     //And connection between TRANSMITTER and RECEIVER
     if(fd= llopen(link_info.port,app_info.status)){
         printf("ERROR\n");
-        free(filename);
         return 1;
     }
+    app_info.fileDescriptor = fd;
+
 
     //Open the file + size of file
     int size;
     if(size = open_file(filename) <0){
         printf("ERROR\n");
-        free(filename);
         return 1;
     }
     
     //Send control package with START
     int package_size;
-    if((package_size = create_control_package(2,filename,size,package)) < 0){
+    if((package_size = create_control_package(CTRL_START,filename,size,package)) < 0){
         printf("ERROR\n");
-        free(filename);
         return 1;
     }
     int write_length;
     if((write_length = llwrite(fd,package,package_size)) <0){
         printf("ERROR\n");
-        free(filename);
         return 1;
     }
     //Keep sending Data packages until the end of the file
@@ -87,14 +85,14 @@ int main(int argc, char** argv){
 
         if(create_data_package(n,line_size,line,frame) <0){
             printf("ERROR\n");
-            free(filename);
+            free(frame);
             return 1;
         }
 
         int frame_size = line_size + 4;
         if(llwrite(fd,frame,frame_size) <0){
             printf("ERROR\n");
-            free(filename);
+            free(frame);
             return 1;
         }
 
@@ -102,24 +100,24 @@ int main(int argc, char** argv){
     }
      
     //Send control package with END
-    if((package_size = create_control_package(3,filename,size,package)) < 0){ //again should I put the control stuff in constants?
+    if((package_size = create_control_package(CTRL_END,filename,size,package)) < 0){ //again should I put the control stuff in constants?
         printf("ERROR\n");
-        free(filename);
+        free(frame);
         return 1;
     }
     if((write_length = llwrite(fd,package,package_size)) <0){
         printf("ERROR\n");
-        free(filename);
+        free(frame);
         return 1;
     }
 
     //Close connection 
     if(llclose(fd,app_info.status) < 0){
         printf("ERROR\n");
-        free(filename);
+        free(frame);
         return 1;
     }
-    free(filename);
+    free(frame);
     return 0;
 }
 

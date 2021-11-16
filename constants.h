@@ -52,4 +52,8 @@
 #define TRANSMITTER 0
 #define RECEIVER 1
 
+#define CTRL_DATA 1
+#define CTRL_START 2
+#define CTRL_END 3
+
 #endif

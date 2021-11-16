@@ -6,6 +6,7 @@
 #include <signal.h>
 
 #include "app.h"
+#include "constants.h"
 
 /*We are gonna ask the user for stuff to fill out the struct linkLayer 
 
@@ -21,8 +22,9 @@ Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, pr
 */
 int create_data_package(int n,int length, char*data,char*package){
     //ASK TEACHER: check how N, L2 and L1 are calculated
-    package[0] = 1; //C – campo de controlo (valor: 1 – dados)
+    package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
     package[1] = n % 255 ; //%255->does it only want the sequenceNumber or is it, sequenceNumber % 255
+    app_info.sequenceNumber = package[1];
     package[2] = length / 256; //L2
     package[3] = length % 256; //L1
     if(memcpy(&package[4],data,length) == NULL){ //memcpy returns destination pointer
@@ -47,6 +49,7 @@ int create_control_package(int c,char* file_name, int file_size, char*package){
     package[2] = strlen(lstring);
     if(memcpy(&package[3],lstring,strlen(lstring) == NULL)){
         printf("ERROR\n");
+        free(lstring);
         return -1;
     }
     size=3+strlen(lstring);
@@ -57,10 +60,12 @@ int create_control_package(int c,char* file_name, int file_size, char*package){
     size++;
    if(memcpy(&package[size],file_name,strlen(file_name)) == NULL){
         printf("ERROR\n");
+        free(lstring);
         return -1;
     }
     size+=strlen(file_name);
     printf("Control package created\n");
+    free(lstring);
     return size;
 }
 
@@ -73,15 +78,11 @@ int read_data_package(char*data,char*package){
     
     //What if there's more values to sequence number than 0 and 1 and that's why we got the %255 stuff? Idk tbh
 
-    if(link_info.sequenceNumber == 0 && package[1] == "0"){
-        link_info.sequenceNumber = 1;
+    if(package[1]>app_info.sequenceNumber){
+        return -1; //repeated packet
     }
-    else if(link_info.sequenceNumber == 1 && package[1] == "1"){
-        link_info.sequenceNumber = 0;
-    }
-    else{
-        return -1; //it's repeated info-->dump?
-    }
+    app_info.sequenceNumber = (app_info.sequenceNumber + 1) %255; //Update
+    
 
     int size = 256*package[2] + package[3];
     if(memcpy(data,&package[4],size) == NULL){
@@ -105,6 +106,7 @@ int read_control_package(char*package,char*file_name,int*file_size,int package_s
            i++;
            if(memcpy(sizes,&package[i],size) == NULL){
                printf("ERROR\n");
+               free(sizes);
                return -1;
            }
            sscanf(sizes,"%d",file_size);
@@ -116,10 +118,12 @@ int read_control_package(char*package,char*file_name,int*file_size,int package_s
            i++;
            if(memcpy(file_name,&package[i],size) == NULL){
                printf("ERROR\n");
+               free(sizes);
                return -1;
            }
            i+=size;
         }
-        return 0;
     }
+    free(sizes);
+    return 0;
 }
