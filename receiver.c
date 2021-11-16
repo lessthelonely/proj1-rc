@@ -6,7 +6,6 @@
 //Here we are gonna use llread
 
 int main(int argc, char** argv){
-    char*filename;
     //Parse arguments
     //Should reader select timeout, number of sequences, baudRate (whatever that is, I think it's only important for the last part)
     for(int i=1;i<argc;i++){
@@ -38,7 +37,6 @@ int main(int argc, char** argv){
     //And connection between TRANSMITTER and RECEIVER
     if(fd= llopen(link_info.port,app_info.status)){
         printf("ERROR\n");
-        free(filename);
         return 1;
     }
 
@@ -51,9 +49,7 @@ int main(int argc, char** argv){
     //Close connection 
     if(llclose(fd,app_info.status) < 0){
         printf("ERROR\n");
-        free(filename);
         return 1;
     }
-    free(filename);
     return 0;
 }
