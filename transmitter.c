@@ -72,10 +72,35 @@ int main(int argc, char** argv){
         return 1;
     }
     //Keep sending Data packages until the end of the file
-    //How? Good question...
-    
-    
-    
+    int c_size = MAX_FRAME_SIZE;
+    int n=0,line_size=0;
+    char*line[c_size];
+    char*frame=(char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
+
+    while(TRUE){
+        if(size - n*c_size < c_size){
+            c_size=size % c_size;
+        }
+        if((line_size=fread(line,1,c_size,fprt) <=0)){ //could be an error or could be EOF
+            break;
+        }
+
+        if(create_data_package(n,line_size,line,frame) <0){
+            printf("ERROR\n");
+            free(filename);
+            return 1;
+        }
+
+        int frame_size = line_size + 4;
+        if(llwrite(fd,frame,frame_size) <0){
+            printf("ERROR\n");
+            free(filename);
+            return 1;
+        }
+
+        n++;
+    }
+     
     //Send control package with END
     if((package_size = create_control_package(3,filename,size,package)) < 0){ //again should I put the control stuff in constants?
         printf("ERROR\n");
