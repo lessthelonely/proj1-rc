@@ -4,6 +4,7 @@
 #include "app.h"
 #include "constants.h"
 #include "protocol_app.h"
+#include "alarm.h"
 
 FILE *fprt;
 //Here we are gonna use llwrite
@@ -41,6 +42,7 @@ int main(int argc, char** argv){
         }
     }
 
+    install_alarm();
     int fd;
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER

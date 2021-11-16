@@ -10,9 +10,7 @@
 #include "stuffing.h"
 #include "app.h"
 #include "protocol_app.h"
-
-#define FALSE 0
-#define TRUE 1
+#include "alarm.h"
 
 struct termios oldtio, newtio;
 
@@ -21,6 +19,7 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
     int fd;
     if(sender != TRANSMITTER || sender != RECEIVER){ //sender will be TRANSMITTER or RECEIVER
         printf("ERROR"); 
+        return -1;
     }
 
     fd = open(porta, O_RDWR | O_NOCTTY);
@@ -61,31 +60,41 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
   }
 
   char*cmd;
+  int cmd_received=FALSE;
 
   if(sender == TRANSMITTER){
-        signal(SIGALRM, atende); //instala rotina que atende interrupção
-
-        if(send_cmd(0, TRANSMITTER)<0){ //Send SET
+    while(!cmd_received){
+      if(send_cmd(0, TRANSMITTER)<0){ //Send SET
            printf("ERROR");
         }
+      
+      alarm(link_info.timeout);
 
-        alarm(3);
-
-        if(read_cmd(cmd)<0){ //Receive UA
+      if(read_cmd(cmd)<0){ //Receive UA
           printf("ERROR");
-        }
+      }
+      if(cmd == C_UA){
+        deactivate_alarm();
+        cmd_received = TRUE;
+      }
+    }    
     }
     else{
-
-        //should it have a while here?
-        if(read_cmd(cmd)<0){
+        //should it have a while here? Yes
+        while(!cmd_received){
+          if(read_cmd(cmd)<0){ //Should I change read_cmd to see which C we are reading?
             printf("ERROR");
-        }
-        
-        if(send_cmd(2,TRANSMITTER)<0){//it's answering the transmitter
-           printf("ERROR");
+          }
+          if(cmd == C_SET){
+            if(send_cmd(2,TRANSMITTER)<0){//it's answering the transmitter
+               printf("ERROR");
+            }
+            else{
+              cmd_received = TRUE;
+            }
         }
     }
+  }
 
     return fd;
 }
@@ -100,11 +109,11 @@ Return value should -1 in case of error or number of caracters written
 TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, char*buffer,int length){
-  
   char* trama = (char*) malloc(MAX_SIZE*sizeof(char)); //Allocs space to write info trama
   memset(trama,0,strlen(trama)); //initialize trama array
   if(length<0){ 
     printf("Value should be positive in order to actually transfer data\n");
+    free(trama);
     return -1;
   }
   int write_length;
@@ -113,8 +122,6 @@ int llwrite(int fd, char*buffer,int length){
   while(TRUE){ //might need a better condition-->thought for later
      //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
      write_length = create_info_trauma(buffer,trama,length);
-
-     signal(SIGALRM, atende); //instala rotina que atende interrupção
 
      //not gonna call send_cmd because info trama is a special case
      if(write(fd,trama,write_length)<0){
@@ -125,7 +132,7 @@ int llwrite(int fd, char*buffer,int length){
        //Sends sequence number 0 first and then number 1 (slide 14 Ns=0/1)
          printf("TRANSMITTER sent sucessfully sequence number %d\n",link_info.sequenceNumber);
      }
-     alarm(3);
+      alarm(link_info.timeout);
 
      //need to change read_cmd in order for it to return the command that was written
      //Not the return...the return still needs to be an int in order to see if there was an error or not
@@ -134,7 +141,7 @@ int llwrite(int fd, char*buffer,int length){
      //do I need to check if RR_one is sent when sequence number is one and all that?
      //Maybe it's better
 
-      if(read_cmd(cmd)<0){ //Receive UA
+      if(read_cmd(cmd)<0){ 
         printf("ERROR");
       }
       else{
@@ -143,18 +150,21 @@ int llwrite(int fd, char*buffer,int length){
 
       //RR->means it was accepted
       if((cmd == C_RR_ZERO && link_info.sequenceNumber == 0) || (cmd == C_RR_ONE && link_info.sequenceNumber == 1)){
-        free(trama);
+        deactivate_alarm();
         if(link_info.sequenceNumber == 0){
           link_info.sequenceNumber=1;
         }
         else{
           link_info.sequenceNumber=0;
         }
+        free(trama);
         return write_length;
       }
 
       if((cmd == C_REJ_ZERO && link_info.sequenceNumber == 0) || (cmd == C_REJ_ONE && link_info.sequenceNumber == 1)){
+        deactivate_alarm();
         printf("Received REJ\n");
+        free(trama);
         return -1; //wait is it consider error if we get REJ?
       }
     }
@@ -268,49 +278,60 @@ int llread(int fd,char*buffer){
 //need to do alarm + timeout each time
 int llclose(int fd, int sender){
   int check=-1,conta=0;
+  int cmd_received= FALSE;
   char*cmd;
   if(sender != TRANSMITTER || sender != RECEIVER){ //sender will be TRANSMITTER or RECEIVER
       printf("ERROR"); 
     }
   
   if(sender == TRANSMITTER){
-    while(check < 0 && conta < 3){
-    if((check=send_cmd(1,TRANSMITTER))<0){ //send DISC
-        //send again every 3 seconds for 3 times
-        sleep(3);
-        conta++;
-    }
-    else{
-      conta = 0;
-    }
-    if(read_cmd(cmd)<0){ //read DISC
-       //should it try to send it again?
-       printf("Couldn't read DISC message");
-    }
-    if(send_cmd(2,TRANSMITTER)<0){ //send UA
-       //receiver doesn't have to send it back so we don't have to do the timeout to make sure it was sent?
-       printf("Couldn't send UA message");
-    }
+    while(!cmd_received){
+      if(send_cmd(1,TRANSMITTER)<0){
+        printf("ERROR\n");
+      }
+
+      if(read_cmd(cmd) < 0){
+        printf("Try again\n");
+      }
+      if(cmd == C_DISC){
+        deactivate_alarm();
+        cmd_received = TRUE;
+      }
+
+      if(send_cmd(2,TRANSMITTER) <0){
+        printf("Couldn't send UA, turning connection off\n");
+      }
     }
   }
   else{
-     while(check < 0 && conta < 3){
-    if(read_cmd(cmd)<0){ //read DISC
-       printf("Couldn't read DISC message");
-    }
-    if(send_cmd(1,TRANSMITTER)<0){ //send DISC back as a response
-        //Do we have to do timeout for receiver, we were told we had to for trasmitter
-        sleep(3);
-        conta++;
-    }
-    else{
-      conta = 0;
-    }
-    if(read_cmd(cmd)<0){ //read UA
-       printf("Couldn't read UA messages");
-    }
+    while(!cmd_received){
+      if(read_cmd(cmd) < 0){
+        printf("ERROR\n");
+        continue;
+      }
+      else{
+        if(cmd == C_DISC){
+          cmd_received = TRUE;
+        }
+      }
+
+      if(send_cmd(1,TRANSMITTER) < 0){
+        printf("ERROR\n");
+        continue;
+      }
+
+      if(read_cmd(cmd) < 0){
+        printf("ERROR\n");
+        continue;
+      }
+      else{
+        if(cmd == C_UA){
+          cmd_received = TRUE;
+        }
+      }
     }
   }
+
 
   //close fd
    sleep(1);
