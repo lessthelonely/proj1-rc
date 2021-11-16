@@ -10,6 +10,7 @@ FILE *fprt;
 
 int main(int argc, char** argv){
     char*filename;
+    char*package [MAX_SIZE]; //should it be larger?
     //Parse arguments
     for(int i=1;i<argc;i++){
         if(strcmp(argv[i],"") != 0){
@@ -58,8 +59,34 @@ int main(int argc, char** argv){
     }
     
     //Send control package with START
+    int package_size;
+    if((package_size = create_control_package(2,filename,size,package)) < 0){
+        printf("ERROR\n");
+        free(filename);
+        return 1;
+    }
+    int write_length;
+    if((write_length = llwrite(fd,package,package_size)) <0){
+        printf("ERROR\n");
+        free(filename);
+        return 1;
+    }
     //Keep sending Data packages until the end of the file
+    //How? Good question...
+    
+    
+    
     //Send control package with END
+    if((package_size = create_control_package(3,filename,size,package)) < 0){ //again should I put the control stuff in constants?
+        printf("ERROR\n");
+        free(filename);
+        return 1;
+    }
+    if((write_length = llwrite(fd,package,package_size)) <0){
+        printf("ERROR\n");
+        free(filename);
+        return 1;
+    }
 
     //Close connection 
     if(llclose(fd,app_info.status) < 0){
