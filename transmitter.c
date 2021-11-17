@@ -145,30 +145,3 @@ int main(int argc, char **argv)
     free(frame);
     return 0;
 }
-
-//File: https://www.programiz.com/c-programming/c-file-input-output
-//File size: https://www.geeksforgeeks.org/c-program-find-size-file/
-/*Returns -1 in case of error
-Returns the size of the file otherwise*/
-int open_file(char *filename)
-{
-    //Open file
-    if ((fprt = fopen(filename, "r")) == NULL)
-    { //can I use fopen or should it be open? Also r or rb (read in binary)?
-        printf("ERROR: file doesn't exist\n");
-        return -1;
-    }
-
-    //Get size of file
-    if (fseek(fprt, 0L, SEEK_END) != 0)
-    {
-        printf("ERROR\n");
-        return -1;
-    }
-
-    int size = ftell(fprt);
-
-    //Should I put the pointer at the start with fseek + SEEK_SET?
-
-    return size;
-}
