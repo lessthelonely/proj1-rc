@@ -21,7 +21,7 @@
 #define FLAG 0x7E
 
 #define A_E 0x03 //Comandos do Emissor e Respostas do Receptor
-#define A_R 0x01 //Comandos do Receptor e Respostas do Emissor
+#define A_R 0x01 //Comandos do Receptor e Respostas do Emissor--->we don't need this but teacher will confirm
 
 #define C_SET 0x03
 #define C_DISC 0x0B
