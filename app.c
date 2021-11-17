@@ -9,12 +9,10 @@
 #include "../include/constants.h"
 
 /*We are gonna ask the user for stuff to fill out the struct linkLayer 
-
 Need to make two packets: control and data
 Control packets have two types: 1) symbolizes transmission start
                                 2) symbolizes transmission end
 Contents of each packet->slide 23
-
 Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, probs
 */
 

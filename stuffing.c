@@ -14,6 +14,7 @@ If everything goes well, what do we return?
 */
 int stuffing(char *buffer, int length, char **frame)
 {
+    printf("I'm in stuffing\n");
     *frame = NULL; //making sure frame is null/empty
     /*The new frame needs to have a different length than the og frame
 and by different I mean bigger, everytime it finds ESC or FLAG we need to replace it with FLAG and ESC (respectively)
@@ -24,6 +25,7 @@ length + counter or do we just do length * 2 (for example, it's never going to b
 Which is better: waste resources with a for cycle or waste it with allocating memory?
     */
     *frame = (char *)malloc(length * 2);
+    printf("Frame here\n");
 
     int new_size = 0;
     for (int i = 0; i < length; i++)
@@ -46,7 +48,8 @@ Which is better: waste resources with a for cycle or waste it with allocating me
         }
         new_size++;
     }
-    free(frame);
+    printf("I did the process\n");
+    printf("I'm leaving\n");
     return new_size;
 }
 

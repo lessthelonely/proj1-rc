@@ -1,3 +1,4 @@
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -99,9 +100,7 @@ int llopen(char *porta, int sender)
 char* buffer is char array we want to transmit so it will the be data part of the info trauma?
 In order to make this function work->need to build the information trama
 F A C BCC1 char*buffer? BCC2 F
-
 Return value should -1 in case of error or number of caracters written
-
 TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, char *buffer, int length)
@@ -394,7 +393,6 @@ int create_info_trama(char *buffer, char *trama, int length)
   doesn't make sense to make a new function just because of that-->let's do it with C_I_ZERO first just to structure it,
   BCC1 is BCC_C_I_ZERO(in the case that C==C_I_ZERO), then char*buffer (I think), BCC2 is going to be obtained by a for cycle 
   with every char from the char*buffer array (doing xor in all those guys) and finally adding another flag
-
   CAREFUL--->this is where bit stuffing comes in (and destuffing)
   Think it's after the info trama is assembled tho because slide 7 says "(antes de stuffing e após destuffing)"
   
@@ -402,7 +400,6 @@ int create_info_trama(char *buffer, char *trama, int length)
     We have the original data->this data goes through stuffing before it's sent to the receiver because it's a way to ensure 
   that the transmission starts and ends at the correct places
     Receiver gets the trama stuffed, before it stores the information tho, sends the trama to go through the destuffing process
-
   With that in mind makes sense to have stuffing and destuffing in a separate file (maybe...)
   */
 
@@ -420,9 +417,11 @@ int create_info_trama(char *buffer, char *trama, int length)
   int data_length = stuffing(buffer, length, &data_stuffed);
   printf("I returned from stuffing\n");
   int bcc2_length = stuffing(&BCC2, 1, &bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
+  printf("I returned from stuffing\n");
 
   //Assemble info trama
   int new_length = data_length + bcc2_length + 5; //5 because F A C BCC1 F
+  printf("new_length %d\n",new_length);
   trama[0] = FLAG;
   trama[1] = A_E;
   if (link_info.sequenceNumber == 0)
@@ -436,11 +435,24 @@ int create_info_trama(char *buffer, char *trama, int length)
     trama[3] = BCC_C_I_ONE;
   }
 
-  memcpy(&trama[4], data_stuffed, data_length);
-  int index_bcc2 = data_length + 4;
-  memcpy(&trama[index_bcc2], bcc2_stuffed, bcc2_length);
-  trama[new_length - 1] = FLAG; //second flag is at the end of the frame
+  printf("trama built\n");
+  printf("new_length %d\n",new_length);
+  printf("data_length %d\n",data_length);
 
+
+  memcpy(&trama[4], data_stuffed, data_length);
+  printf("trama[4] copied\n");
+  printf("new_length %d\n",new_length);
+  int index_bcc2 = data_length + 4;
+  printf("index_bcc2 %d\n",index_bcc2);
+  printf("bcc2_stuffed %02x\n",bcc2_stuffed);
+  printf("bcc2 size %d\n",bcc2_length);
+  memcpy(&trama[index_bcc2], bcc2_stuffed, bcc2_length);
+  
+  
+  printf("new_length %d\n",new_length);
+  trama[new_length - 1] = FLAG; //second flag is at the end of the frame
+  printf("we leaving\n");
   //Need to keep track of pointers to free and think where I can free them
   return new_length;
 }

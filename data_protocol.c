@@ -1,4 +1,3 @@
-/*Non-Canonical Input Processing*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -143,7 +142,6 @@ do I have to get the char*cmd like read_cmd?
 I don't need a char*cmd or well I do but not for the same reason
 I need a char array in order to store the data part of the info trama
 Because I'll need to check if BCC2 is correct, if it's not, we need to dump this trama
-
 Returns -1 in case of error or length of the trama written
 */
 int read_info_trama(char *info_trama, char *cmd)
