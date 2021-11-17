@@ -5,9 +5,13 @@
 #include <termios.h>
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include "data_protocol.h"
-#include "constants.h"
+#include "../include/data_protocol.h" 
+#include "../include/constants.h" 
+#include "../include/app.h"
+#include "../include/alarm.h"
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
@@ -15,11 +19,8 @@
 #define FALSE 0
 #define TRUE 1
 
-int got_CMD = FALSE;
 
-int flag = 1, conta = 1;
-int fd;
-u_int8_t cmd[5];
+char cmd[5];
 u_int8_t buf[255];
 
 /*Function to use for every cmd except when it's an info trama*/
@@ -85,7 +86,7 @@ int send_cmd(int command, int sender) { //emissor (writenoncanonical.c)
   }
   
   printf("I'M SENDING THIS COMMAND: %d | %d | %d | %d | %d \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
-  int res = write(fd, cmd, sizeof(cmd));
+  int res = write(app_info.fileDescriptor, cmd, 5);
   if (res == -1)
   {
     printf("ERROR IN SENDING.\n");
@@ -109,7 +110,7 @@ int read_info_trama(char*info_trama,char*cmd){
   static int is_bcc_okay = 0;
 
   while(TRUE){
-    if(res=read(fd,&byte_received,1) < 0){
+    if((res=read(app_info.fileDescriptor,&byte_received,1)) < 0){
       printf("ERROR\n");
       return res;
     }
@@ -213,93 +214,98 @@ int read_info_trama(char*info_trama,char*cmd){
   return res;
 }*/
 
-int read_cmd(char* cmd){
+int read_cmd(int fd){
   char byte_received;
   int res;
   messageState state = START;
   //should check the value of BCC in order to see if we can move on to BCC_OK state
   static int is_bcc_okay = 0;
+      printf("--READ NOT SUPERVISION FRAME [UA, DISC, SET]--\n");
 
   while(TRUE){
-    if(res=read(fd,&byte_received,1) < 0){
-      printf("ERROR\n");
-      return res;
-    }
+    printf("FD FRAME_NOT_SUPERVISION ");
+        printf("%d\n",fd);
+
+    if (read(fd, &byte_received, 1) == -1) 
+            return -1; 
+
+  printf("ENTERING STATE MACHINE\n");
 
   switch(state){
     case START:
+      printf("%02x\n", byte_received);
       if(byte_received == FLAG){
         is_bcc_okay = 0;
         state=FLAG_RCV;
+        printf("LEAVING START\n");
       }
       break;
     case FLAG_RCV:
+     //deactivate_alarm();
+      printf("IN FLAG\n");
+      printf("%02x\n", byte_received);
       if(byte_received == A_E || byte_received == A_R){
         is_bcc_okay ^= byte_received;
         state=A_RCV;
+        printf("LEAVING FLAG\n");
       }
-      if(byte_received != FLAG){ //according to the teacher's state machine if it's a FLAG we should stay in this state if not we should go to START
+      else if(byte_received != FLAG){ //according to the teacher's state machine if it's a FLAG we should stay in this state if not we should go to START
         state = START;
+        printf("GOING START\n");
       }
       break;
     case A_RCV:
+      printf("%02x\n", byte_received);
       if(byte_received == C_UA || byte_received == C_REJ_ONE || byte_received == C_REJ_ZERO || byte_received == C_RR_ONE || byte_received == C_RR_ZERO || byte_received == C_SET || byte_received == C_DISC){
-        *cmd = byte_received; //need this to know how the previous message was received
+        //*cmd = byte_received; //need this to know how the previous message was received
         is_bcc_okay ^= byte_received;
         state=C_RCV;
+        printf("LEAVING A\n");
       }
       else if(byte_received == FLAG){
         state=FLAG_RCV;
+        printf("GOING TO FLAG\n");
       }
       else{
         state = START;
+        printf("GOING START\n");
       }
       break;
     case C_RCV:
+      printf("%02x\n", byte_received);
       is_bcc_okay ^=byte_received;
       if(is_bcc_okay == 0){
         state= BCC_OK;
+        printf("LEAVING C\n");
       }
       else if(byte_received == FLAG){
         state=FLAG_RCV;
+        printf("GOING FLAG\n");
       }
       else{
         state = START;
+        printf("GOING START\n");
       }
       break;
     case BCC_OK:
+      printf("%02x\n", byte_received);
       if(byte_received == FLAG){
         state=STOP;
+        printf("LEAVING BCC_OK\n");
+        res=0;
+        printf("BYE BYE BYE\n");
+        return res;
       }
       else{
         state=START;
+        printf("GOING START\n");
       }
       break;
-    case STOP:
-      res=0;
-      return res;
   }
   }
+  return -1;
 }
 
-void atende() // atende alarme--->emissor(writenonical.c)
-{
-  if (!got_CMD)
-  {
-    send_cmd(2, TRANSMITTER);
-    printf("alarme # %d\n", conta);
-    conta++;
-    if (conta < 4)
-    {
-      alarm(3);
-    }
-    else
-    {
-      printf("ERROR - Timeout over. It wasn't possible to receive command successfully\n");
-      exit(1);
-    }
-  }
-}
 
 /*
 int main(int argc, char **argv)
@@ -390,3 +396,66 @@ int main(int argc, char **argv)
   close(fd);
   return 0;
 }*/
+
+int read_frame_not_supervision(int fd, char CMD)
+{
+    int curr_state = 0; /* byte that is being read. From 0 to 4.*/
+    char data;
+    printf("--READ NOT SUPERVISION FRAME [UA, DISC, SET]--\n");
+    while (TRUE) { 
+        printf("FD FRAME_NOT_SUPERVISION ");
+        printf("%d\n",fd);
+
+        if (read(fd, &data, 1) == -1) 
+            return -1; 
+        printf("Not stuck in read\n");
+
+        switch (curr_state) { 
+
+        // RECEIVE FLAG
+        case 0: 
+
+            printf("case 0: %02x\n", data);
+            if (data == FLAG)
+                curr_state++;
+            break;
+
+        // RECEIVE ADDR
+        case 1:
+            printf("case 1: %02x\n", data);
+            if (data == A_E)
+                curr_state++;
+            else if (data != FLAG)
+                curr_state = 0;
+            break;
+
+        // RECEIVE CMD
+        case 2:
+            printf("case 2: %02x\n", data);
+            if (data == CMD)
+                curr_state++;
+            else if (data == FLAG)
+                curr_state = 1;
+            else
+                curr_state = 0;
+            break;
+        // RECEIVE BCC
+        case 3:
+            printf("case 3: %02x\n", data);
+            if (data == (CMD ^ A_E))
+                curr_state++;
+            else if (data == FLAG)
+                curr_state = 1;
+            else
+                curr_state = 0;
+            break;
+
+        // RECEIVE FLAG
+        case 4:
+            ("case 4: %02x\n", data);
+            if (data == FLAG) return 0; 
+            else curr_state = 0;
+        }
+    }
+    return -1;
+}

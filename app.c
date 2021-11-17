@@ -5,8 +5,9 @@
 #include <stdio.h>
 #include <signal.h>
 
-#include "app.h"
-#include "constants.h"
+#include "../include/app.h" 
+#include "../include/constants.h"
+
 
 /*We are gonna ask the user for stuff to fill out the struct linkLayer 
 

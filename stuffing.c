@@ -4,7 +4,7 @@
 #include <termios.h>
 #include <stdio.h>
 
-#include "constants.h"
+#include "../include/constants.h" 
 
 /* What should be the return?
 In case there's an error it should be -1 (makes sense to me)

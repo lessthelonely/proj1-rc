@@ -1,7 +1,8 @@
 //RECEIVER
-#include "app.h"
-#include "constants.h"
-#include "protocol_app.h"
+#include "../include/app.h" 
+#include "../include/protocol_app.h" 
+#include "../include/constants.h" 
+
 
 //Here we are gonna use llread
 FILE *fptr;
@@ -9,42 +10,35 @@ FILE *fptr;
 int main(int argc, char** argv){
     char*package=(char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
     char*frame=(char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
+    int fd=0;
+    app_info.status = RECEIVER;
+    
+
     //Parse arguments
-    //Should reader select timeout, number of sequences, baudRate (whatever that is, I think it's only important for the last part)
     for(int i=1;i<argc;i++){
         if(strcmp(argv[i],"") != 0){
              if (!strncmp(argv[i], "/dev/ttyS", 9)){
+                 
+                
                  strcpy(link_info.port,argv[i]);
-             }
-
-             if(!strcmp(argv[i],"-r")){
-                 app_info.status = RECEIVER;
-             }
-
-             if(!strcmp(argv[i],"-t")){
-                 link_info.timeout = atoi(argv[i+1]);
-             }
-
-             if(!strcmp(argv[i],"-n")){
-                 link_info.numTransmissions = atoi(argv[i+1]);
-             }
-
-             if(!strcmp(argv[i],"-b")){
-                 link_info.baudRate = atoi(argv[i+1]);
              }
         }
     }
+    fd = open(argv[1], O_RDWR | O_NOCTTY);
+  if (fd < 0)
+  {
+    perror(argv[1]);
+    exit(-1);
+  }
+  printf("RECEIVER ");
+  printf("%d\n",fd);
+  app_info.fileDescriptor = fd;
 
-    int fd;
+    printf("hi\n");
+    
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    if(fd= llopen(link_info.port,app_info.status)){
-        printf("ERROR\n");
-        free(package);
-        free(frame);
-        return 1;
-    }
-    app_info.fileDescriptor = fd;
+    llopen(link_info.port,app_info.status);
 
     int size;
     int received_ctrl_pack_start =  FALSE;

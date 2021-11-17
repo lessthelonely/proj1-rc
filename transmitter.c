@@ -1,29 +1,23 @@
 //TRANSMITTER
-#include <stdio.h>
+#include "../include/app.h" 
+#include "../include/constants.h" 
+#include "../include/protocol_app.h" 
+#include "../include/alarm.h" 
 
-#include "app.h"
-#include "constants.h"
-#include "protocol_app.h"
-#include "alarm.h"
 
 FILE *fprt;
 //Here we are gonna use llwrite
-
 int main(int argc, char** argv){
-    char*filename;
-    char*package [MAX_SIZE]; //should it be larger?
+    char*package [MAX_FRAME_SIZE]; //should it be larger? Yes-->256*L2+L1-->needs to address this, make it larger
+    char*filename[255];
+    int fd=0;
+    app_info.status=TRANSMITTER;
     //Parse arguments
     for(int i=1;i<argc;i++){
         if(strcmp(argv[i],"") != 0){
              if (!strncmp(argv[i], "/dev/ttyS", 9)){
-                 strcpy(link_info.port,argv[i]);
+                 strcpy(link_info.port,argv[i]);              
              }
-
-             //Issuer == Emissor
-             if(!strcmp(argv[i],"-i")){
-                 app_info.status = TRANSMITTER;
-             }
-             
              if(!strcmp(argv[i],"-t")){
                  link_info.timeout = atoi(argv[i+1]);
              }
@@ -41,29 +35,41 @@ int main(int argc, char** argv){
              }
         }
     }
+  
+  struct stat st;
+  stat(filename,&st);
+  int size=st.st_size; //get file's size
+
+  //Open file
+  if((fprt = fopen(filename,"r")) == NULL){ //can I use fopen or should it be open? Also r or rb (read in binary)?
+      printf("ERROR: file doesn't exist\n");
+      return -1;
+   }
+
+   //printf("SIZE ");
+   //printf("%d\n",size); //for pinguim.gif is 10968
+   
+    
+  fd = open(argv[1], O_RDWR | O_NOCTTY);
+  if (fd < 0)
+  {
+    perror(argv[1]);
+    exit(-1);
+  }
+  printf("TRANSMITTER FD ");
+  printf("%d\n",fd);
+  app_info.fileDescriptor = fd;
 
     install_alarm();
-    int fd;
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    if(fd= llopen(link_info.port,app_info.status)){
-        printf("ERROR\n");
-        return 1;
-    }
-    app_info.fileDescriptor = fd;
+    llopen(link_info.port,app_info.status);
 
-
-    //Open the file + size of file
-    int size;
-    if(size = open_file(filename) <0){
-        printf("ERROR\n");
-        return 1;
-    }
-    
     //Send control package with START
     int package_size;
     if((package_size = create_control_package(CTRL_START,filename,size,package)) < 0){
         printf("ERROR\n");
+        printf("BYEEEEEEEEEEE\n");
         return 1;
     }
     int write_length;
