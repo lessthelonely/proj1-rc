@@ -12,27 +12,9 @@
 #include "../include/protocol_app.h" 
 #include "../include/alarm.h" 
 
-int numTransmissions = 0; 
-int fd_transmitter = 0; 
-struct termios oldtio_transmitter; 
-struct termios oldtio_receiver; 
 struct termios newtio,oldtio; 
 
-int send_frame_nnsp(int fd, char ADDR, char CMD)
-{
-    printf("FD ");
-    printf("%d\n",fd);
-    char frame[5];
-    frame[0] = FLAG;
-    frame[1] = ADDR;
-    frame[2] = CMD;
-    frame[3] = frame[1] ^ frame[2];
-    frame[4] = FLAG;
-
-    return write(fd, frame, 5);
-}
-
-/*Returns fd or -1 in case of error*/
+/*Returns 0 or -1 in case of error*/
 int llopen(char* porta,int sender){ //Slides uses int porta but it's more practical in char* because it's serial ports are in char*
     
     if(sender != TRANSMITTER && sender != RECEIVER){ //sender will be TRANSMITTER or RECEIVER
@@ -67,9 +49,6 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
     }
 
   if(sender == TRANSMITTER){
-   // fd=openDescriptor(porta,&oldtio_transmitter,&newtio);
-   // app_info.fileDescriptor=fd;
-     // Establishment of the connection.  
         while (res != 0) { 
             alarm(link_info.timeout);
             if(send_cmd(0, TRANSMITTER)<0){ //Send SET
@@ -398,41 +377,4 @@ int create_info_trauma(char*buffer,char*trama,int length){
 
   //Need to keep track of pointers to free and think where I can free them
   return new_length;
-}
-
-int openDescriptor(char *porta, struct termios *oldtio, struct termios *newtio)
-{
-    int fd;
-    if((fd = open(porta, O_RDWR | O_NOCTTY)) < 0) {
-        printf("ERROR\n");
-        return -1;
-    }
-    printf("openDescriptor: ");
-    printf("%s ",porta);
-    printf("%d\n",fd);
-
-    if (tcgetattr(fd, oldtio) == -1) { 
-        printf("ERROR\n");
-        return -1;
-    }
-
-    bzero(newtio, sizeof(newtio));
-    newtio->c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-    newtio->c_iflag = IGNPAR;
-    newtio->c_oflag = 0;
-
-    /* set input mode (non-canonical, no echo,...) */
-    newtio->c_lflag = 0;
-
-    newtio->c_cc[VTIME] = 1; /* inter-character timer unused */
-    newtio->c_cc[VMIN] = 0;  /* blocking read until 1 chars received */
-
-    tcflush(fd, TCIOFLUSH);
-
-    if (tcsetattr(fd, TCSANOW, newtio) == -1) {
-        printf("ERROR\n");
-        return -1;
-    }
-
-    return fd;
 }
