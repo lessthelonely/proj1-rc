@@ -33,20 +33,20 @@
 #define C_I_ONE 0x40
 #define C_I_ZERO 0x00
 
-#define BCC_SET (A_E^C_SET) //SET is always sent by emissor
-#define BCC_UA_E (A_E^C_UA)
-#define BCC_UA_R (A_R^C_UA)
-#define BCC_DISC_E (A_E^C_DISC)
-#define BCC_DISC_R (A_R^C_DISC)
-#define BCC_C_I_ONE (A_E^C_I_ONE)
-#define BCC_C_I_ZERO (A_E^C_I_ZERO)
-#define BCC_RR_ONE (A_E^C_RR_ONE)
-#define BCC_RR_ZERO (A_E^C_RR_ZERO)
-#define BCC_REJ_ONE (A_E^C_REJ_ONE)
-#define BCC_REJ_ZERO (A_E^C_REJ_ZERO)
+#define BCC_SET (A_E ^ C_SET) //SET is always sent by emissor
+#define BCC_UA_E (A_E ^ C_UA)
+#define BCC_UA_R (A_R ^ C_UA)
+#define BCC_DISC_E (A_E ^ C_DISC)
+#define BCC_DISC_R (A_R ^ C_DISC)
+#define BCC_C_I_ONE (A_E ^ C_I_ONE)
+#define BCC_C_I_ZERO (A_E ^ C_I_ZERO)
+#define BCC_RR_ONE (A_E ^ C_RR_ONE)
+#define BCC_RR_ZERO (A_E ^ C_RR_ZERO)
+#define BCC_REJ_ONE (A_E ^ C_REJ_ONE)
+#define BCC_REJ_ZERO (A_E ^ C_REJ_ZERO)
 
 #define ESC 0x7D
-#define FLAG_FOUND 0x5E    //FLAG ^ 0x20
+#define FLAG_FOUND 0x5E //FLAG ^ 0x20
 #define ESC_FOUND 0x5D  //ESC ^ 0x20
 
 #define TRANSMITTER 0
