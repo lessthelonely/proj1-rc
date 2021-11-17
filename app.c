@@ -37,18 +37,25 @@ int create_data_package(int n,int length, char*data,char*package){
 }
 
 int create_control_package(int c,char* file_name, int file_size, char*package){
+    printf("IN CREATE CONTROL PACKAGE\n");
     int size=0;
     package[0] = c; //need to be informed if it's supposed to be the start (2) or end (3)-->should I make constants?
     /*Going to have two sets of TLV:
     First one is about the size of the file
     Second about the name of the file
     */
+    printf("file_size ");
+    printf("%d\n",file_size);
 
     char*lstring = (char*)malloc(sizeof(int));
     sprintf(lstring,"%d",file_size);
+
+    printf("lstring ");
+    printf("%s\n",lstring);
+
     package[1] = 0; //file size (should it be a constant?)
     package[2] = strlen(lstring);
-    if(memcpy(&package[3],lstring,strlen(lstring) == NULL)){
+    if(memcpy(&package[3],lstring,strlen(lstring) )== NULL){
         printf("ERROR\n");
         free(lstring);
         return -1;

@@ -60,18 +60,18 @@ int main(int argc, char** argv){
   printf("%d\n",fd);
   app_info.fileDescriptor = fd;
 
-    install_alarm();
-    //Open connection between app and data protocol
-    //And connection between TRANSMITTER and RECEIVER
-    llopen(link_info.port,app_info.status);
+  install_alarm();
+  //Open connection between app and data protocol
+  //And connection between TRANSMITTER and RECEIVER
+  llopen(link_info.port,app_info.status);
 
-    //Send control package with START
-    int package_size;
-    if((package_size = create_control_package(CTRL_START,filename,size,package)) < 0){
-        printf("ERROR\n");
-        printf("BYEEEEEEEEEEE\n");
-        return 1;
-    }
+  //Send control package with START
+  int package_size;
+  if((package_size = create_control_package(CTRL_START,filename,size,package)) < 0){
+      printf("ERROR\n");
+      return 1;
+   }
+  printf("We returned safely here\n");
     int write_length;
     if((write_length = llwrite(fd,package,package_size)) <0){
         printf("ERROR\n");

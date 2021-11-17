@@ -14,7 +14,7 @@ typedef enum
 
 int send_cmd(int command, int sender);
 int read_info_trama(char* info_trama,char*cmd);
-int read_cmd(int fd);
+int read_cmd(int fd,char* cmd);
 void atende();
 
 #endif

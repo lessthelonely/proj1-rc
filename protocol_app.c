@@ -22,7 +22,7 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
         return -1;
     }
 
-  char*cmd;
+  char*cmd[1];
   int res=-1;
 
       if (tcgetattr(app_info.fileDescriptor, &oldtio) == -1) { 
@@ -56,7 +56,7 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
         }
             else printf("Written CMD_SET.");
             
-            if((res = read_cmd(app_info.fileDescriptor)) >= 0)
+            if((res = read_cmd(app_info.fileDescriptor,cmd)) >= 0)
                 printf("Received UA.");
         }
 
@@ -69,7 +69,7 @@ int llopen(char* porta,int sender){ //Slides uses int porta but it's more practi
 
         while(res < 0){
             // Establishment of the connection. 
-            read_cmd(app_info.fileDescriptor);
+            read_cmd(app_info.fileDescriptor,cmd);
             printf("Received CMD_SET with success.");
 
            if((res=send_cmd(2,TRANSMITTER))<0){
@@ -93,6 +93,7 @@ Return value should -1 in case of error or number of caracters written
 TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, char*buffer,int length){
+  printf("I'm in llwrite\n");
   char* trama = (char*) malloc(MAX_SIZE*sizeof(char)); //Allocs space to write info trama
   memset(trama,0,strlen(trama)); //initialize trama array
   if(length<0){ 
@@ -125,7 +126,7 @@ int llwrite(int fd, char*buffer,int length){
      //do I need to check if RR_one is sent when sequence number is one and all that?
      //Maybe it's better
 
-      if(read_cmd(cmd)<0){ 
+      if(read_cmd(app_info.fileDescriptor,cmd)<0){ 
         printf("ERROR");
       }
       else{
@@ -274,7 +275,7 @@ int llclose(int fd, int sender){
         printf("ERROR\n");
       }
 
-      if(read_cmd(cmd) < 0){
+      if(read_cmd(app_info.fileDescriptor,cmd) < 0){
         printf("Try again\n");
       }
       if(cmd == C_DISC){
@@ -289,7 +290,7 @@ int llclose(int fd, int sender){
   }
   else{
     while(!cmd_received){
-      if(read_cmd(cmd) < 0){
+      if(read_cmd(app_info.fileDescriptor,cmd) < 0){
         printf("ERROR\n");
         continue;
       }
@@ -304,7 +305,7 @@ int llclose(int fd, int sender){
         continue;
       }
 
-      if(read_cmd(cmd) < 0){
+      if(read_cmd(app_info.fileDescriptor,cmd) < 0){
         printf("ERROR\n");
         continue;
       }

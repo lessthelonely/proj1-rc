@@ -182,7 +182,7 @@ int read_info_trama(char*info_trama,char*cmd){
   }
 }
 
-int read_cmd(int fd){
+int read_cmd(int fd,char*cmd){
   char byte_received;
   int res;
   messageState state = START;
@@ -225,7 +225,7 @@ int read_cmd(int fd){
     case A_RCV:
       printf("%02x\n", byte_received);
       if(byte_received == C_UA || byte_received == C_REJ_ONE || byte_received == C_REJ_ZERO || byte_received == C_RR_ONE || byte_received == C_RR_ZERO || byte_received == C_SET || byte_received == C_DISC){
-        //*cmd = byte_received; //need this to know how the previous message was received
+        *cmd = byte_received; //need this to know how the previous message was received
         is_bcc_okay ^= byte_received;
         state=C_RCV;
         printf("LEAVING A\n");
