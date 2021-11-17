@@ -121,7 +121,7 @@ int llwrite(int fd, char *buffer, int length)
   while (TRUE)
   { //might need a better condition-->thought for later
     //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
-    write_length = create_info_trauma(buffer, trama, length);
+    write_length = create_info_trama(buffer, trama, length);
 
     //not gonna call send_cmd because info trama is a special case
     if (write(fd, trama, write_length) < 0)
@@ -387,7 +387,7 @@ int llclose(int fd, int sender)
   return 0;
 }
 
-int create_info_trauma(char *buffer, char *trama, int length)
+int create_info_trama(char *buffer, char *trama, int length)
 {
   /* Okay like got to add flag, A_E because it's the transmitter that sends info, C_I_ZERO (check slide 14) but wait it's
   C_I_ZERO for the first time, should I make a counter to see if it's the first or second time transmitter is sending the info trama
@@ -407,15 +407,18 @@ int create_info_trauma(char *buffer, char *trama, int length)
   */
 
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
+  printf("I'm in create_info_trama\n");
   char BCC2 = buffer[0];
   for (int i = 1; i < (length - 1); i++)
   {
     BCC2 ^= buffer[i];
   }
+  printf("BCC2 %02x\n",BCC2);
 
   //We need to stuff the data + BCC2
   char *data_stuffed, bcc2_stuffed;
   int data_length = stuffing(buffer, length, &data_stuffed);
+  printf("I returned from stuffing\n");
   int bcc2_length = stuffing(&BCC2, 1, &bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
 
   //Assemble info trama
