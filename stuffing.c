@@ -72,27 +72,28 @@ If everything goes well, what do we return?
 ->zero
 ->size of the new/og frame?
 */
-int destuffing(char *buffer, int length, char **frame)
+int destuffing(char *buffer, int length)
 {
-    *frame = NULL;
     //With stuffing the frame goes back to its original size
-    *frame = (char *)malloc(length);
+    char*frame = (char *)malloc(sizeof(char)*length);
 
     int new_size = 0;
     for (int i = 0; i < length; i++)
     {
         if (buffer[i] == ESC)
         {
-            (*frame)[new_size] = ESC_FOUND;
+            frame[new_size] = ESC_FOUND;
         }
         else
         {
-            (*frame)[new_size] = buffer[i];
+           frame[new_size] = buffer[i];
         }
 
         new_size++;
     }
 
+    memcpy(buffer,frame,new_size);
+    printf("new_size %d\n",new_size);
     free(frame);
     return new_size;
 }

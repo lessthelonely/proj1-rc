@@ -21,6 +21,7 @@
 char cmd[5];
 u_int8_t buf[255];
 
+
 /*Function to use for every cmd except when it's an info trama*/
 int send_cmd(int command, int sender)
 { //emissor (writenoncanonical.c)
@@ -146,52 +147,65 @@ Returns -1 in case of error or length of the trama written
 */
 int read_info_trama(char *info_trama, char *cmd)
 {
+  int r=-1;
+  printf("I'm in read_info_trama\n");
   char byte_received;
-  int res;
   messageState state = START;
   //should check the value of BCC in order to see if we can move on to BCC_OK state
   static int is_bcc_okay = 0;
 
   while (TRUE)
   {
-    if ((res = read(app_info.fileDescriptor, &byte_received, 1)) < 0)
+    if (read(app_info.fileDescriptor, &byte_received, 1) < 0)
     {
       printf("ERROR\n");
-      return res;
+      return -1;
     }
-    res = 0;
 
     switch (state)
     {
     case START:
+      r=0;
+      printf("RES %d\n",r);
+      printf("START %02x\n", byte_received);
       if (byte_received == FLAG)
       {
         is_bcc_okay = 0;
         state = FLAG_RCV;
+        printf("LEAVING START\n");
+
       }
       break;
     case FLAG_RCV:
+      printf("RES %d\n",r);
+      printf("IN FLAG %02x\n", byte_received);
       if (byte_received == A_E)
       { //info trama is only sent by TRANSMITTER
         is_bcc_okay ^= byte_received;
         state = A_RCV;
+        printf("LEAVING FLAG\n");
       }
-      if (byte_received != FLAG)
+      else if (byte_received != FLAG)
       { //according to the teacher's state machine if it's a FLAG we should stay in this state if not we should go to START
         state = START;
+        printf("GOING START\n");
       }
       break;
     case A_RCV:
+      printf("RES %d\n",r);
       //C  Campo de Controlo 0 S 0 0 0 0 0 0 S = N(s) -->slide 7
+       printf("IN A %02x\n", byte_received);
       if (byte_received == C_I_ONE || byte_received == C_I_ZERO)
       {
         is_bcc_okay ^= byte_received;
-        *cmd = byte_received;
+        cmd = byte_received;
         state = C_RCV;
+        printf("LEAVING A\n");
       }
       else if (byte_received == FLAG)
       {
         state = FLAG_RCV;
+        printf("GOING TO FLAG\n");
       }
       else
       {
@@ -199,46 +213,65 @@ int read_info_trama(char *info_trama, char *cmd)
       }
       break;
     case C_RCV:
+      printf("RES %d\n",r);
+      printf("IN C %02x\n", byte_received);
       is_bcc_okay ^= byte_received;
       if (is_bcc_okay == 0)
       {
         state = BCC_OK;
+        printf("LEAVING C\n");
       }
       else if (byte_received == FLAG)
       {
         state = FLAG_RCV;
+        printf("GOING FLAG\n");
       }
       else
       {
         state = START;
+        printf("GOING START\n");
       }
       break;
     case BCC_OK:
+      printf("RES %d\n",r);
+      printf("IN BCC_OK %02x\n", byte_received);
       if (byte_received == FLAG)
       {
         state = FLAG_RCV;
       }
       else
       {
-        info_trama[res] = byte_received;
-        res++;
+        printf("RES %d\n",r);
+        info_trama[r] = byte_received;
+        r++;
+        printf("RES %d\n",r);
         state = D_RCV;
       }
       break;
     case D_RCV:
+      printf("RES %d\n",r);
+      printf("IN D %02x\n", byte_received);
       if (byte_received == FLAG)
       {
         state = STOP;
+        printf("LEAVING BCC_OK\n");
+        printf("BYE BYE BYE\n");
+        printf("RES %d\n",r);
+        return r;
       }
       else
       {
-        info_trama[res] = byte_received;
-        res++;
+        printf("RES %d\n",r);
+        info_trama[r] = byte_received;
+        r++;
+        printf("RES %d\n",r);
       }
+      break;
     case STOP:
-      return res;
+      return r;
     }
   }
+  return -1;
 }
 
 int read_cmd(int fd, char *cmd)

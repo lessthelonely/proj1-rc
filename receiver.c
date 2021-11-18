@@ -51,7 +51,7 @@ int main(int argc, char **argv)
             free(frame);
             return 1;
         }
-        char *filename;
+        char *filename[MAX_SIZE];
         int file_size;
         if (package[0] == CTRL_START)
         { //okay maybe I should have them in constants

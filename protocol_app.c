@@ -114,16 +114,20 @@ int llwrite(int fd, char *buffer, int length)
     return -1;
   }
   int write_length;
-  char *cmd;
+  char *cmd[1];
   //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
+  memset(trama, 0, strlen(trama)); //initialize trama array
+  write_length = create_info_trama(buffer, trama, length);
   while (TRUE)
   { //might need a better condition-->thought for later
     //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
-    memset(trama, 0, strlen(trama)); //initialize trama array
-    write_length = create_info_trama(buffer, trama, length);
+    
 
+    alarm(link_info.timeout);
     //not gonna call send_cmd because info trama is a special case
-    if (write(fd, trama, write_length) < 0)
+    printf("trama %d\n",strlen(trama));
+    printf("write_length %d\n",write_length);
+    if (write(app_info.fileDescriptor, trama, write_length) < 0)
     {
       printf("ERROR");
     }
@@ -133,7 +137,6 @@ int llwrite(int fd, char *buffer, int length)
       //Sends sequence number 0 first and then number 1 (slide 14 Ns=0/1)
       printf("TRANSMITTER sent sucessfully sequence number %d\n", link_info.sequenceNumber);
     }
-    alarm(link_info.timeout);
 
     //need to change read_cmd in order for it to return the command that was written
     //Not the return...the return still needs to be an int in order to see if there was an error or not
@@ -152,7 +155,7 @@ int llwrite(int fd, char *buffer, int length)
     }
 
     //RR->means it was accepted
-    if ((cmd == C_RR_ZERO && link_info.sequenceNumber == 0) || (cmd == C_RR_ONE && link_info.sequenceNumber == 1))
+    if ((*cmd == C_RR_ZERO && link_info.sequenceNumber == 0) || (*cmd == C_RR_ONE && link_info.sequenceNumber == 1))
     {
       deactivate_alarm();
       if (link_info.sequenceNumber == 0)
@@ -167,7 +170,7 @@ int llwrite(int fd, char *buffer, int length)
       return write_length;
     }
 
-    if ((cmd == C_REJ_ZERO && link_info.sequenceNumber == 0) || (cmd == C_REJ_ONE && link_info.sequenceNumber == 1))
+    if ((*cmd == C_REJ_ZERO && link_info.sequenceNumber == 0) || (*cmd == C_REJ_ONE && link_info.sequenceNumber == 1))
     {
       deactivate_alarm();
       printf("Received REJ\n");
@@ -182,13 +185,15 @@ int llwrite(int fd, char *buffer, int length)
 */
 int llread(int fd, char *buffer)
 {
+  printf("I'm in llread\n");
   int length;
 
   while (TRUE)
   {
     //read info trama-->can't use read_cmd because of the data segment
-    char *info_trama, cmd;
-    if (length = read_info_trama(info_trama, cmd) < 0)
+    char *info_trama[MAX_FRAME_SIZE], *cmd[1];
+    printf("I got here\n");
+    if ((length = read_info_trama(info_trama,cmd) < 0))
     {
       //should try to read again?
       //or error?
@@ -198,16 +203,15 @@ int llread(int fd, char *buffer)
       printf("Read successfully info message with sequence number %d\n", link_info.sequenceNumber);
     }
 
-    char *frame;
     //Need to destuff before storing
-    destuffing(info_trama, length, &frame);
+    destuffing(info_trama, length);
 
     //Check if BCC2 is correct, if not dump info
     //First we create BCC2 based on the info and then we check if it matches up with the last bit of info trama (that should be BCC2)
-    char BCC2 = frame[0];
+    char BCC2 = info_trama[0];
     for (int i = 1; i < (length - 1); i++)
     {
-      BCC2 ^= frame[i];
+      BCC2 ^= *info_trama[i];
     }
 
     /*Okay let's interpret slide 11:
