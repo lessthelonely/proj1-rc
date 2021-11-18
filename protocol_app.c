@@ -105,6 +105,7 @@ TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, char *buffer, int length)
 {
+  static int s_writer = 0;
   char *trama = (char *)malloc(MAX_SIZE * sizeof(char)); //Allocs space to write info trama
   printf("IN LLWRITE, size of trama is %d\n",strlen(trama));
   if (length < 0)
@@ -117,12 +118,11 @@ int llwrite(int fd, char *buffer, int length)
   char *cmd[1];
   //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
   memset(trama, 0, strlen(trama)); //initialize trama array
-  write_length = create_info_trama(buffer, trama, length);
+  write_length = create_info_trama(buffer, trama, length,s_writer);
   while (TRUE)
   { //might need a better condition-->thought for later
     //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
     
-
     alarm(link_info.timeout);
     //not gonna call send_cmd because info trama is a special case
     printf("trama %d\n",strlen(trama));
@@ -135,7 +135,7 @@ int llwrite(int fd, char *buffer, int length)
     {
       //Okay only TRANSMITTER sends info trama however it can send sequence number 0 or 1
       //Sends sequence number 0 first and then number 1 (slide 14 Ns=0/1)
-      printf("TRANSMITTER sent sucessfully sequence number %d\n", link_info.sequenceNumber);
+      printf("TRANSMITTER sent sucessfully sequence number %d\n", s_writer);
     }
 
     //need to change read_cmd in order for it to return the command that was written
@@ -145,32 +145,39 @@ int llwrite(int fd, char *buffer, int length)
     //do I need to check if RR_one is sent when sequence number is one and all that?
     //Maybe it's better
 
-    if (read_cmd(app_info.fileDescriptor, cmd) < 0)
+    if (read_frame_supervision(app_info.fileDescriptor, cmd) < 0)
     {
       printf("ERROR");
     }
     else
     {
-      printf("Command was read sucessfully sequence number %d\n", link_info.sequenceNumber);
+      printf("Command was read sucessfully sequence number %d\n", s_writer);
+      printf("%02x\n",*cmd);
     }
 
+    printf("$RHJWEEI\n");
+    
+
     //RR->means it was accepted
-    if ((*cmd == C_RR_ZERO && link_info.sequenceNumber == 0) || (*cmd == C_RR_ONE && link_info.sequenceNumber == 1))
+    if ((*cmd == C_RR_ZERO && s_writer == 0) || (*cmd == C_RR_ONE && s_writer == 1))
     {
+      printf("HIEHR\n");
       deactivate_alarm();
-      if (link_info.sequenceNumber == 0)
+
+      SWITCH(s_writer);
+      /*if (link_info.sequenceNumber == 0)
       {
         link_info.sequenceNumber = 1;
       }
       else
       {
         link_info.sequenceNumber = 0;
-      }
+      }*/
       free(trama);
       return write_length;
     }
 
-    if ((*cmd == C_REJ_ZERO && link_info.sequenceNumber == 0) || (*cmd == C_REJ_ONE && link_info.sequenceNumber == 1))
+    if ((*cmd == C_REJ_ZERO && s_writer == 0) || (*cmd == C_REJ_ONE && s_writer == 1))
     {
       deactivate_alarm();
       printf("Received REJ\n");
@@ -180,11 +187,19 @@ int llwrite(int fd, char *buffer, int length)
   }
 }
 
+void check_BCC2(char * info_trama, char* BCC2, int length)
+{
+    for (int i = 1 ; i < length; i++){
+        *BCC2 ^= info_trama[i]; 
+    } 
+}
+
 /* RECEIVER is the only one who calls this function
    Return length of array of caracters read or -1 in case of error
 */
 int llread(int fd, char *buffer)
 {
+  static int s_reader=0;
   printf("I'm in llread\n");
   int length;
 
@@ -200,7 +215,7 @@ int llread(int fd, char *buffer)
     }
     else
     {
-      printf("Read successfully info message with sequence number %d\n", link_info.sequenceNumber);
+      printf("Read successfully info message with sequence number %d\n", s_reader);
     }
 
     printf("LENGTH %d\n",length);
@@ -208,13 +223,24 @@ int llread(int fd, char *buffer)
     //Need to destuff before storing
     destuffing(info_trama, length);
 
+    printf("%02x\n",info_trama[21]);
+
     //Check if BCC2 is correct, if not dump info
     //First we create BCC2 based on the info and then we check if it matches up with the last bit of info trama (that should be BCC2)
-    char BCC2 = info_trama[0];
-    for (int i = 1; i < (length - 1); i++)
+    /*char BCC2 = info_trama[0];
+    printf("BCC2 %02x\n",BCC2);
+    for (int i = 1; i < length; i++)
     {
+      printf("i %d\n",i);
       BCC2 ^= *info_trama[i];
-    }
+    }*/
+
+    char BCC2;
+    BCC2 = info_trama[0];
+    check_BCC2(info_trama,&BCC2,length);
+    printf("BCC2 %02x\n",BCC2); 
+
+    printf("We alive\n");
 
     /*Okay let's interpret slide 11:
     We need to check if BCC2 is right however maybe this is not the first thing we need to do
@@ -236,13 +262,17 @@ int llread(int fd, char *buffer)
       bcc2_is_not_okay = TRUE;
     }
 
+    printf("%02x\n",*cmd);
+    printf("%d\n",s_reader);
+
     //Info is duplicated
-    if ((cmd == C_I_ZERO && link_info.sequenceNumber == 1) || (cmd == C_I_ONE && link_info.sequenceNumber == 0))
+    if ((*cmd == C_I_ZERO && s_reader == 1) || (*cmd == C_I_ONE && s_reader == 0))
     {
-      if (bcc2_is_not_okay)
+      printf("HERERWRWR\n");
+      if (bcc2_is_not_okay) //BCC2 is wrong 
       {
         //Send RR
-        if (link_info.sequenceNumber == 0)
+        if (s_reader == 0)
         {
           /*When analyzing the whole program I don't think we will ever use A_R because I don't think receiver sends
         a command without it being an answer to the transmitter but in those cases we should use A_E
@@ -252,18 +282,21 @@ int llread(int fd, char *buffer)
         }
         else
         {
+          printf("I'm here\n");
           send_cmd(3, TRANSMITTER);
         }
       }
       else
       {
+        //Info duplicated but BCC2 right
         //Send RR & dump info
-        if (link_info.sequenceNumber == 0)
+        if (s_reader== 0)
         {
           send_cmd(4, TRANSMITTER);
         }
         else
         {
+          printf("DUMP IT\n");
           send_cmd(3, TRANSMITTER);
         }
       }
@@ -273,7 +306,7 @@ int llread(int fd, char *buffer)
       if (bcc2_is_not_okay)
       {
         //Send REJ
-        if (link_info.sequenceNumber == 0)
+        if (s_reader == 0)
         {
           send_cmd(6, TRANSMITTER);
         }
@@ -286,16 +319,19 @@ int llread(int fd, char *buffer)
       {
         //Send RR + store info
         //Should change sequence number?
-        if (link_info.sequenceNumber == 0)
+        if (s_reader == 0)
         {
           send_cmd(4, TRANSMITTER);
-          link_info.sequenceNumber = 1;
+          SWITCH(s_reader);
+          printf("HEeew\n");
         }
         else
         {
+          printf("HIHRI$HR\n");
           send_cmd(3, TRANSMITTER);
-          link_info.sequenceNumber = 0;
+          SWITCH(s_reader);
         }
+        printf("LENGTH %d\n",length);
         return length;
       }
     }
@@ -392,7 +428,7 @@ int llclose(int fd, int sender)
   return 0;
 }
 
-int create_info_trama(char *buffer, char *trama, int length)
+int create_info_trama(char *buffer, char *trama, int length,int s_writer)
 {
   /* Okay like got to add flag, A_E because it's the transmitter that sends info, C_I_ZERO (check slide 14) but wait it's
   C_I_ZERO for the first time, should I make a counter to see if it's the first or second time transmitter is sending the info trama
@@ -432,7 +468,7 @@ int create_info_trama(char *buffer, char *trama, int length)
   int new_length = new_data_length + new_bcc2_length + 5; //5 because F A C BCC1 F
   trama[0] = FLAG;
   trama[1] = A_E;
-  if (link_info.sequenceNumber == 0)
+  if (s_writer == 0)
   {
     trama[2] = C_I_ZERO;
     trama[3] = BCC_C_I_ZERO;

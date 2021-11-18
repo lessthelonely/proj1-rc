@@ -56,4 +56,6 @@
 #define CTRL_START 2
 #define CTRL_END 3
 
+#define SWITCH(s)           !s
+
 #endif

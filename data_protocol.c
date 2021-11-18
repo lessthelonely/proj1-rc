@@ -51,6 +51,7 @@ int send_cmd(int command, int sender)
       cmd[4] = FLAG;
       break;
     case 3: // RR
+      printf("LET'S GOOOOO 3 \n");
       cmd[0] = FLAG;
       cmd[1] = A_E;
       cmd[2] = C_RR_ONE;
@@ -58,6 +59,7 @@ int send_cmd(int command, int sender)
       cmd[4] = FLAG;
       break;
     case 4: // RR
+      printf("LET'S GOOOOO 4 \n");
       cmd[0] = FLAG;
       cmd[1] = A_E;
       cmd[2] = C_RR_ZERO;
@@ -65,6 +67,7 @@ int send_cmd(int command, int sender)
       cmd[4] = FLAG;
       break;
     case 5:
+      printf("LET'S GOOOOO 5 \n");
       cmd[0] = FLAG;
       cmd[1] = A_E;
       cmd[2] = C_REJ_ONE;
@@ -72,6 +75,7 @@ int send_cmd(int command, int sender)
       cmd[4] = FLAG;
       break;
     case 6:
+      printf("LET'S GOOOOO 6 \n");
       cmd[0] = FLAG;
       cmd[1] = A_E;
       cmd[2] = C_REJ_ZERO;
@@ -277,16 +281,13 @@ int read_info_trama(char *info_trama, char *cmd)
 int read_cmd(int fd, char *cmd)
 {
   char byte_received;
-  int res;
   messageState state = START;
   //should check the value of BCC in order to see if we can move on to BCC_OK state
   static int is_bcc_okay = 0;
-  printf("--READ NOT SUPERVISION FRAME [UA, DISC, SET]--\n");
+  printf("--READ FRAME [UA, DISC, SET]--\n");
 
   while (TRUE)
   {
-    printf("FD FRAME_NOT_SUPERVISION ");
-    printf("%d\n", fd);
 
     if (read(fd, &byte_received, 1) == -1)
       return -1;
@@ -365,9 +366,8 @@ int read_cmd(int fd, char *cmd)
       {
         state = STOP;
         printf("LEAVING BCC_OK\n");
-        res = 0;
         printf("BYE BYE BYE\n");
-        return res;
+        return 0;
       }
       else
       {
@@ -378,4 +378,69 @@ int read_cmd(int fd, char *cmd)
     }
   }
   return -1;
+}
+
+int read_frame_supervision(int fd, char *CMD){
+   int curr_state = 0; /* byte that is being read. From 0 to 4.*/
+    char byte;
+
+    printf("--READ SUPERVISION FRAME [RR, REJ]--\n"); 
+    while (TRUE)
+    {
+        if (read(fd, &byte, 1) == -1) 
+            return -1;
+
+        switch (curr_state)
+        {
+        // RECEIVE FLAG
+        case 0: 
+
+            printf("case 0: %02x\n", byte);
+            if (byte == FLAG)
+                curr_state++;
+            break;
+
+        // RECEIVE ADDR
+        case 1:
+            printf("case 1: %02x\n", byte);
+            if (byte == A_E)
+                curr_state++;
+            else if (byte != FLAG)
+                curr_state = 0;
+            break;
+
+        // RECEIVE CMD
+        case 2:
+            printf("case 2: %02x\n", byte);
+            if (byte == C_REJ_ONE || byte == C_RR_ONE || byte == C_RR_ZERO || byte == C_REJ_ZERO){
+                *CMD = byte; 
+                printf("%02x\n", *CMD);
+                curr_state++;
+            } 
+            else if (byte == FLAG)
+                curr_state = 1;
+            else
+                curr_state = 0;
+            break;
+        // RECEIVE BCC
+        case 3:
+            printf("case 3: %02x\n", byte);
+            if (byte == (*CMD ^ A_E))
+                curr_state++;
+            else if (byte == FLAG)
+                curr_state = 1;
+            else
+                curr_state = 0;
+            break;
+
+        // RECEIVE FLAG
+        case 4:
+            printf("case 4: %02x\n", byte);
+            if (byte == FLAG) 
+                return 0; 
+            else
+                curr_state = 0;
+        }
+    }
+    return curr_state;
 }
