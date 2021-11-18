@@ -443,5 +443,5 @@ int create_info_trama(char *buffer, char *trama, int length)
   memcpy(&trama[index_bcc2], BCC2, bcc2_length);
   trama[new_length - 1] = FLAG; //second flag is at the end of the frame
   //Need to keep track of pointers to free and think where I can free them*/
-  return 0;
+  return new_length;
 }
