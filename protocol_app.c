@@ -105,9 +105,8 @@ TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, char *buffer, int length)
 {
-  printf("I'm in llwrite\n");
   char *trama = (char *)malloc(MAX_SIZE * sizeof(char)); //Allocs space to write info trama
-  memset(trama, 0, strlen(trama));                       //initialize trama array
+  printf("IN LLWRITE, size of trama is %d\n",strlen(trama));
   if (length < 0)
   {
     printf("Value should be positive in order to actually transfer data\n");
@@ -120,6 +119,7 @@ int llwrite(int fd, char *buffer, int length)
   while (TRUE)
   { //might need a better condition-->thought for later
     //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
+    memset(trama, 0, strlen(trama)); //initialize trama array
     write_length = create_info_trama(buffer, trama, length);
 
     //not gonna call send_cmd because info trama is a special case
@@ -405,18 +405,19 @@ int create_info_trama(char *buffer, char *trama, int length)
 
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
   printf("I'm in create_info_trama\n");
-  char BCC2 = buffer[0];
-  for (int i = 1; i < (length - 1); i++)
+  char* BCC2 =(char*)malloc(sizeof(char));
+  BCC2[0] = buffer[0];
+  for (int i = 1; i < length; i++)
   {
-    BCC2 ^= buffer[i];
+    *BCC2 ^= buffer[i];
   }
-  printf("BCC2 %02x\n",BCC2);
+  printf("BCC2 %02x\n",*BCC2); //Everything okay until here
 
   //We need to stuff the data + BCC2
   char *data_stuffed, bcc2_stuffed;
   int data_length = stuffing(buffer, length, &data_stuffed);
   printf("I returned from stuffing\n");
-  int bcc2_length = stuffing(&BCC2, 1, &bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
+  int bcc2_length = stuffing(BCC2, 1, &bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
   printf("I returned from stuffing\n");
 
   //Assemble info trama

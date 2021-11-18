@@ -54,8 +54,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    //printf("SIZE ");
-    //printf("%d\n",size); //for pinguim.gif is 10968
+    //printf("SIZE %d\n",size); //for pinguim.gif is 10968
 
     fd = open(argv[1], O_RDWR | O_NOCTTY);
     if (fd < 0)
@@ -79,7 +78,10 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    printf("We returned safely here\n");
+    printf("CONTROL PACKAGE SIZE %d\n",package_size);
+
+    //Until here, everything is alright
+    
     int write_length;
     if ((write_length = llwrite(fd, package, package_size)) < 0)
     {

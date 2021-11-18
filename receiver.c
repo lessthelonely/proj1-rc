@@ -35,11 +35,9 @@ int main(int argc, char **argv)
     printf("%d\n", fd);
     app_info.fileDescriptor = fd;
 
-    printf("hi\n");
-
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    llopen(link_info.port, app_info.status);
+    llopen(link_info.port, app_info.status); //Tested until here, I'm fixing problems with stuff dealing with transmitter.c
 
     int size;
     int received_ctrl_pack_start = FALSE;
