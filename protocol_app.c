@@ -193,7 +193,7 @@ int llread(int fd, char *buffer)
     //read info trama-->can't use read_cmd because of the data segment
     char *info_trama[MAX_FRAME_SIZE], *cmd[1];
     printf("I got here\n");
-    if ((length = read_info_trama(info_trama,cmd) < 0))
+    if ((length = read_info_trama(info_trama,cmd)) < 0)
     {
       //should try to read again?
       //or error?
@@ -202,6 +202,8 @@ int llread(int fd, char *buffer)
     {
       printf("Read successfully info message with sequence number %d\n", link_info.sequenceNumber);
     }
+
+    printf("LENGTH %d\n",length);
 
     //Need to destuff before storing
     destuffing(info_trama, length);
