@@ -405,24 +405,25 @@ int create_info_trama(char *buffer, char *trama, int length)
 
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
   printf("I'm in create_info_trama\n");
+  printf("DATA LENGTH %d\n",length);
   char* BCC2 =(char*)malloc(sizeof(char));
   BCC2[0] = buffer[0];
   for (int i = 1; i < length; i++)
   {
     *BCC2 ^= buffer[i];
   }
-  printf("BCC2 %02x\n",*BCC2); //Everything okay until here
+  printf("BCC2 %02x\n",*BCC2); 
 
   //We need to stuff the data + BCC2
-  char *data_stuffed, bcc2_stuffed;
-  int data_length = stuffing(buffer, length, &data_stuffed);
+  int bcc2_length=1;
+  int new_bcc2_length = stuffing(BCC2, bcc2_length); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
   printf("I returned from stuffing\n");
-  int bcc2_length = stuffing(BCC2, 1, &bcc2_stuffed); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
+
+  int new_data_length = stuffing(buffer, length);
   printf("I returned from stuffing\n");
 
   //Assemble info trama
-  int new_length = data_length + bcc2_length + 5; //5 because F A C BCC1 F
-  printf("new_length %d\n",new_length);
+  int new_length = new_data_length + new_bcc2_length + 5; //5 because F A C BCC1 F
   trama[0] = FLAG;
   trama[1] = A_E;
   if (link_info.sequenceNumber == 0)
@@ -437,23 +438,10 @@ int create_info_trama(char *buffer, char *trama, int length)
   }
 
   printf("trama built\n");
-  printf("new_length %d\n",new_length);
-  printf("data_length %d\n",data_length);
 
-
-  memcpy(&trama[4], data_stuffed, data_length);
-  printf("trama[4] copied\n");
-  printf("new_length %d\n",new_length);
-  int index_bcc2 = data_length + 4;
-  printf("index_bcc2 %d\n",index_bcc2);
-  printf("bcc2_stuffed %02x\n",bcc2_stuffed);
-  printf("bcc2 size %d\n",bcc2_length);
-  memcpy(&trama[index_bcc2], bcc2_stuffed, bcc2_length);
-  
-  
-  printf("new_length %d\n",new_length);
+  int index_bcc2 = length + 4;
+  memcpy(&trama[index_bcc2], BCC2, bcc2_length);
   trama[new_length - 1] = FLAG; //second flag is at the end of the frame
-  printf("we leaving\n");
-  //Need to keep track of pointers to free and think where I can free them
-  return new_length;
+  //Need to keep track of pointers to free and think where I can free them*/
+  return 0;
 }
