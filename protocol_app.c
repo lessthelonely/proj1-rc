@@ -115,7 +115,7 @@ int llwrite(int fd, char *buffer, int length)
     return -1;
   }
   int write_length;
-  char *cmd[1];
+  u_int8_t cmd;
   //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
   memset(trama, 0, strlen(trama)); //initialize trama array
   write_length = create_info_trama(buffer, trama, length,s_writer);
@@ -145,21 +145,21 @@ int llwrite(int fd, char *buffer, int length)
     //do I need to check if RR_one is sent when sequence number is one and all that?
     //Maybe it's better
 
-    if (read_frame_supervision(app_info.fileDescriptor, cmd) < 0)
+    if (read_test(app_info.fileDescriptor, &cmd) < 0)
     {
       printf("ERROR");
     }
     else
     {
       printf("Command was read sucessfully sequence number %d\n", s_writer);
-      printf("%02x\n",*cmd);
+      printf("%02x\n",cmd);
     }
-
-    printf("$RHJWEEI\n");
     
+    printf("%d\n",cmd == C_RR_ZERO && s_writer == 0);
+    printf("%d\n",cmd == C_RR_ONE && s_writer == 1);
 
     //RR->means it was accepted
-    if ((*cmd == C_RR_ZERO && s_writer == 0) || (*cmd == C_RR_ONE && s_writer == 1))
+    if ((cmd == C_RR_ZERO && s_writer == 0) || (cmd == C_RR_ONE && s_writer == 1))
     {
       printf("HIEHR\n");
       deactivate_alarm();
@@ -177,7 +177,7 @@ int llwrite(int fd, char *buffer, int length)
       return write_length;
     }
 
-    if ((*cmd == C_REJ_ZERO && s_writer == 0) || (*cmd == C_REJ_ONE && s_writer == 1))
+    if ((cmd == C_REJ_ZERO && s_writer == 0) || (cmd == C_REJ_ONE && s_writer == 1))
     {
       deactivate_alarm();
       printf("Received REJ\n");

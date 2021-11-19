@@ -52,7 +52,6 @@ int main(int argc, char **argv)
             return 1;
         }
         received_ctrl_pack_start=TRUE;
-        sleep(3);/*
         char *filename[MAX_SIZE];
         int file_size;
         if (package[0] == CTRL_START)
@@ -65,9 +64,9 @@ int main(int argc, char **argv)
                 return 1;
             }
             received_ctrl_pack_start = TRUE;
-        }*/
+        }
     }
-/*
+
     char *new_file = "new_file.txt"; //Should I ask the receiver to tell me the file name?
     if ((fptr = fopen(new_file, "w")) == NULL)
     {
@@ -122,6 +121,6 @@ int main(int argc, char **argv)
         return 1;
     }
     free(package);
-    free(frame);*/
+    free(frame);
     return 0;
 }

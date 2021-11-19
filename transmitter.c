@@ -92,8 +92,10 @@ int main(int argc, char **argv)
     //Keep sending Data packages until the end of the file
     int c_size = MAX_FRAME_SIZE;
     int n = 0, line_size = 0;
-    char *line[c_size];
+    char *line = (char *)malloc(sizeof(char) * MAX_FRAME_SIZE);
     char *frame = (char *)malloc(sizeof(char) * MAX_FRAME_SIZE);
+
+    printf("STILL HERE\n");
 
     while (TRUE)
     {
