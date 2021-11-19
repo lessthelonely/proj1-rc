@@ -1,4 +1,13 @@
 //RECEIVER
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <stdio.h>
+#include <signal.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "../include/app.h"
 #include "../include/protocol_app.h"
 #include "../include/constants.h"
@@ -8,8 +17,8 @@ FILE *fptr;
 
 int main(int argc, char **argv)
 {
-    char *package = (char *)malloc(sizeof(char) * MAX_FRAME_SIZE);
-    char *frame = (char *)malloc(sizeof(char) * MAX_FRAME_SIZE);
+    u_int8_t *package = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
+    u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
     int fd = 0;
     app_info.status = RECEIVER;
 
@@ -96,7 +105,7 @@ int main(int argc, char **argv)
                 free(frame);
                 return 1;
             }
-            fwrite(frame, sizeof(char), size, fptr);
+            fwrite(frame, sizeof(u_int8_t), size, fptr);
         }
         if (package[0] == CTRL_END)
         {

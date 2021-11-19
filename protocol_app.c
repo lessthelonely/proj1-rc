@@ -25,7 +25,7 @@ int llopen(char *porta, int sender)
     return -1;
   }
 
-  char *cmd[1];
+  u_int8_t cmd;
   int res = -1;
 
   if (tcgetattr(app_info.fileDescriptor, &oldtio) == -1)
@@ -65,7 +65,7 @@ int llopen(char *porta, int sender)
       else
         printf("Written CMD_SET.");
 
-      if ((res = read_cmd(app_info.fileDescriptor, cmd)) >= 0)
+      if ((res = read_cmd(app_info.fileDescriptor, &cmd)) >= 0)
         printf("Received UA.");
     }
 
@@ -80,7 +80,7 @@ int llopen(char *porta, int sender)
     while (res < 0)
     {
       // Establishment of the connection.
-      read_cmd(app_info.fileDescriptor, cmd);
+      read_cmd(app_info.fileDescriptor, &cmd);
       printf("Received CMD_SET with success.");
 
       if ((res = send_cmd(2, TRANSMITTER)) < 0)
@@ -103,10 +103,10 @@ F A C BCC1 char*buffer? BCC2 F
 Return value should -1 in case of error or number of caracters written
 TRANSMITTER is the only one who calls this function
 */
-int llwrite(int fd, char *buffer, int length)
+int llwrite(int fd, u_int8_t *buffer, int length)
 {
   static int s_writer = 0;
-  char *trama = (char *)malloc(MAX_SIZE * sizeof(char)); //Allocs space to write info trama
+  u_int8_t *trama = (u_int8_t *)malloc(MAX_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
   printf("IN LLWRITE, size of trama is %d\n",strlen(trama));
   if (length < 0)
   {
@@ -187,7 +187,7 @@ int llwrite(int fd, char *buffer, int length)
   }
 }
 
-void check_BCC2(char * info_trama, char* BCC2, int length)
+void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 {
     for (int i = 1 ; i < length; i++){
         *BCC2 ^= info_trama[i]; 
@@ -197,7 +197,7 @@ void check_BCC2(char * info_trama, char* BCC2, int length)
 /* RECEIVER is the only one who calls this function
    Return length of array of caracters read or -1 in case of error
 */
-int llread(int fd, char *buffer)
+int llread(int fd, u_int8_t *buffer)
 {
   static int s_reader=0;
   printf("I'm in llread\n");
@@ -206,9 +206,10 @@ int llread(int fd, char *buffer)
   while (TRUE)
   {
     //read info trama-->can't use read_cmd because of the data segment
-    char *info_trama[MAX_FRAME_SIZE], *cmd[1];
+    u_int8_t *info_trama[MAX_FRAME_SIZE];
+    u_int8_t cmd;
     printf("I got here\n");
-    if ((length = read_info_trama(info_trama,cmd)) < 0)
+    if ((length = read_info_trama(info_trama,&cmd)) < 0)
     {
       //should try to read again?
       //or error?
@@ -235,7 +236,7 @@ int llread(int fd, char *buffer)
       BCC2 ^= *info_trama[i];
     }*/
 
-    char BCC2;
+    u_int8_t BCC2;
     BCC2 = info_trama[0];
     check_BCC2(info_trama,&BCC2,length);
     printf("BCC2 %02x\n",BCC2); 
@@ -262,11 +263,11 @@ int llread(int fd, char *buffer)
       bcc2_is_not_okay = TRUE;
     }
 
-    printf("%02x\n",*cmd);
+    printf("%02x\n",cmd);
     printf("%d\n",s_reader);
 
     //Info is duplicated
-    if ((*cmd == C_I_ZERO && s_reader == 1) || (*cmd == C_I_ONE && s_reader == 0))
+    if ((cmd == C_I_ZERO && s_reader == 1) || (cmd == C_I_ONE && s_reader == 0))
     {
       printf("HERERWRWR\n");
       if (bcc2_is_not_okay) //BCC2 is wrong 
@@ -348,7 +349,7 @@ int llclose(int fd, int sender)
 {
   int check = -1, conta = 0;
   int cmd_received = FALSE;
-  char *cmd;
+  u_int8_t cmd;
   if (sender != TRANSMITTER || sender != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR");
@@ -363,7 +364,7 @@ int llclose(int fd, int sender)
         printf("ERROR\n");
       }
 
-      if (read_cmd(app_info.fileDescriptor, cmd) < 0)
+      if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
       {
         printf("Try again\n");
       }
@@ -383,7 +384,7 @@ int llclose(int fd, int sender)
   {
     while (!cmd_received)
     {
-      if (read_cmd(app_info.fileDescriptor, cmd) < 0)
+      if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
       {
         printf("ERROR\n");
         continue;
@@ -402,7 +403,7 @@ int llclose(int fd, int sender)
         continue;
       }
 
-      if (read_cmd(app_info.fileDescriptor, cmd) < 0)
+      if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
       {
         printf("ERROR\n");
         continue;
@@ -428,7 +429,7 @@ int llclose(int fd, int sender)
   return 0;
 }
 
-int create_info_trama(char *buffer, char *trama, int length,int s_writer)
+int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int s_writer)
 {
   /* Okay like got to add flag, A_E because it's the transmitter that sends info, C_I_ZERO (check slide 14) but wait it's
   C_I_ZERO for the first time, should I make a counter to see if it's the first or second time transmitter is sending the info trama
@@ -448,7 +449,7 @@ int create_info_trama(char *buffer, char *trama, int length,int s_writer)
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
   printf("I'm in create_info_trama\n");
   printf("DATA LENGTH %d\n",length);
-  char* BCC2 =(char*)malloc(sizeof(char));
+  u_int8_t* BCC2 =(u_int8_t*)malloc(sizeof(u_int8_t));
   BCC2[0] = buffer[0];
   for (int i = 1; i < length; i++)
   {

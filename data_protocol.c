@@ -18,7 +18,7 @@
 #define FALSE 0
 #define TRUE 1
 
-char cmd[5];
+u_int8_t cmd[5];
 u_int8_t buf[255];
 
 
@@ -149,11 +149,11 @@ I need a char array in order to store the data part of the info trama
 Because I'll need to check if BCC2 is correct, if it's not, we need to dump this trama
 Returns -1 in case of error or length of the trama written
 */
-int read_info_trama(char *info_trama, char *cmd)
+int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd)
 {
   int r=-1;
   printf("I'm in read_info_trama\n");
-  char byte_received;
+  u_int8_t byte_received;
   messageState state = START;
   //should check the value of BCC in order to see if we can move on to BCC_OK state
   static int is_bcc_okay = 0;
@@ -278,9 +278,9 @@ int read_info_trama(char *info_trama, char *cmd)
   return -1;
 }
 
-int read_cmd(int fd, char *cmd)
+int read_cmd(int fd, u_int8_t*cmd)
 {
-  char byte_received;
+  u_int8_t byte_received;
   messageState state = START;
   //should check the value of BCC in order to see if we can move on to BCC_OK state
   static int is_bcc_okay = 0;

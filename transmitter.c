@@ -1,4 +1,13 @@
 //TRANSMITTER
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <stdio.h>
+#include <signal.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "../include/app.h"
 #include "../include/constants.h"
 #include "../include/protocol_app.h"
@@ -8,7 +17,7 @@ FILE *fprt;
 //Here we are gonna use llwrite
 int main(int argc, char **argv)
 {
-    char *package[MAX_FRAME_SIZE]; //should it be larger? Yes-->256*L2+L1-->needs to address this, make it larger
+    u_int8_t *package[MAX_FRAME_SIZE]; //should it be larger? Yes-->256*L2+L1-->needs to address this, make it larger
     char *filename[255];
     int fd = 0;
     app_info.status = TRANSMITTER;
@@ -92,8 +101,8 @@ int main(int argc, char **argv)
     //Keep sending Data packages until the end of the file
     int c_size = MAX_FRAME_SIZE;
     int n = 0, line_size = 0;
-    char *line = (char *)malloc(sizeof(char) * MAX_FRAME_SIZE);
-    char *frame = (char *)malloc(sizeof(char) * MAX_FRAME_SIZE);
+    u_int8_t *line = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
+    u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
 
     printf("STILL HERE\n");
 

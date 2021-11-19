@@ -4,6 +4,8 @@
 #include <termios.h>
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "../include/app.h"
 #include "../include/constants.h"
@@ -18,7 +20,7 @@ Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, pr
 
 /* Return -1 if error, 0 otherwise
 */
-int create_data_package(int n, int length, char *data, char *package)
+int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
 {
     //ASK TEACHER: check how N, L2 and L1 are calculated
     package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
@@ -35,7 +37,7 @@ int create_data_package(int n, int length, char *data, char *package)
     return 0;
 }
 
-int create_control_package(int c, char *file_name, int file_size, char *package)
+int create_control_package(int c, char *file_name, int file_size, u_int8_t *package)
 {
     printf("IN CREATE CONTROL PACKAGE\n");
     int size = 0;
@@ -79,7 +81,7 @@ int create_control_package(int c, char *file_name, int file_size, char *package)
     return size;
 }
 
-int read_data_package(char *data, char *package)
+int read_data_package(u_int8_t *data, u_int8_t *package)
 {
     /*Okay package[0] doesn't matter here, will matter where we call it tho
     should we change the sequence number to whatever sequence number is in package[1]?
@@ -104,9 +106,9 @@ int read_data_package(char *data, char *package)
     return size;
 }
 
-int read_control_package(char *package, char *file_name, int *file_size, int package_size)
+int read_control_package(u_int8_t *package, char *file_name, int *file_size, int package_size)
 {
-    char *sizes = (char *)malloc(sizeof(int));
+    u_int8_t *sizes = (u_int8_t*)malloc(sizeof(int));
     int size;
     /*Idk if package is written differently if C is start or end
     Let's assume it's the same I guess

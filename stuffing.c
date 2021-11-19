@@ -3,6 +3,9 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include <signal.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "../include/constants.h"
 
@@ -12,10 +15,10 @@ If everything goes well, what do we return?
 ->zero
 ->size of the new frame?--->if we do this then maybe it's not necessary to alloc that much space for trama?
 */
-int stuffing(char *buffer, int length)
+int stuffing(u_int8_t *buffer, int length)
 {
     printf("I'm in stuffing \n",length);
-    char*frame; //making sure frame is null/empty
+    u_int8_t*frame; //making sure frame is null/empty
     /*The new frame needs to have a different length than the og frame
 and by different I mean bigger, everytime it finds ESC or FLAG we need to replace it with FLAG and ESC (respectively)
 and add a ESC_FOUND and FLAG_FOUND (respectively)
@@ -32,7 +35,7 @@ Which is better: waste resources with a for cycle or waste it with allocating me
    }
 
     int nl = more+ length;
-    frame = (char *)malloc(sizeof(char)*nl);
+    frame = (u_int8_t*)malloc(sizeof(u_int8_t)*nl);
     printf("Frame here\n");
 
     int counter=length;
@@ -72,10 +75,10 @@ If everything goes well, what do we return?
 ->zero
 ->size of the new/og frame?
 */
-int destuffing(char *buffer, int length)
+int destuffing(u_int8_t *buffer, int length)
 {
     //With stuffing the frame goes back to its original size
-    char*frame = (char *)malloc(sizeof(char)*length);
+    u_int8_t*frame = (u_int8_t *)malloc(sizeof(u_int8_t)*length);
 
     int new_size = 0;
     for (int i = 0; i < length; i++)
