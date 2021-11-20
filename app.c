@@ -166,6 +166,7 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
                 return -1;
             }
             sscanf(sizes, "%d", file_size);
+            printf("FILESIZE: %d\n",file_size);
             i += size;
         }
         if (package[i] == T_FILE_NAME)
@@ -179,7 +180,7 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
                 free(sizes);
                 return -1;
             }
-            i += size;
+            i += size-1;
         }
     }
     printf("wally west\n");

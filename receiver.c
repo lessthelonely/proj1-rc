@@ -22,6 +22,7 @@ int main(int argc, char **argv)
     int fd = 0;
     app_info.status = RECEIVER;
     char *filename = (char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
+    char *new_file = (char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
     int file_size;
 
     //Parse arguments
@@ -36,6 +37,7 @@ int main(int argc, char **argv)
             }
         }
     }
+    new_file=filename;
     fd = open(argv[1], O_RDWR | O_NOCTTY);
     if (fd < 0)
     {
@@ -77,13 +79,13 @@ int main(int argc, char **argv)
                 free(frame);
                 return 1;
             }
-            printf("HEIRHE\n");
             received_ctrl_pack_start = TRUE;
         }
         printf("%d\n",received_ctrl_pack_start);
+        printf("FILESIZE: %d\n",file_size);
     }
 
-    char *new_file = "new_file.txt"; //Should I ask the receiver to tell me the file name?
+    
     if ((fptr = fopen(new_file, "w")) == NULL)
     {
         printf("ERROR\n");
@@ -116,21 +118,34 @@ int main(int argc, char **argv)
         }
 
         memset(frame,0,strlen(frame));
+        printf("FILESIZE: %d\n",file_size);
+
 
         if (package[0] == CTRL_END)
         {
+            u_int8_t*end_outputfile[MAX_FRAME_SIZE];
             printf("Maybe I should read this control package\n");
-            int file_size;
-            if (read_control_package(package, new_file, &file_size, size) < 0)
+            int end_file_size;
+            if (read_control_package(package, end_outputfile, &end_file_size, size) < 0)
             {
                 printf("ERROR\n");
                 free(package);
                 free(frame);
                 return 1;
             }
+
+            if(strcmp(end_outputfile,filename) !=0){
+                printf("End file name: %s :-: Begin file name: %s", end_outputfile, filename); 
+            }
+            if(file_size != end_file_size){
+                printf("DIFF SIZES\n");
+            }
             not_end = TRUE;
         }
     }
+
+    printf("FILENAME: %s\n",filename);
+    printf("FILESIZE: %d\n",file_size);
 
     //Close connection
     if (llclose(fd, app_info.status) < 0)
@@ -142,5 +157,10 @@ int main(int argc, char **argv)
     }
     free(package);
     free(frame);
+    free(filename);
+    if( (fclose(fptr)) == EOF ) {
+        printf("%s", stderr); 
+        exit(-1);
+    }
     return 0;
 }
