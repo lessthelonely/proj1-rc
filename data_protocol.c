@@ -133,7 +133,7 @@ int send_cmd(int command, int sender)
     }
   }
 
-  printf("I'M SENDING THIS COMMAND: %d | %d | %d | %d | %d \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
+  printf("I'M SENDING THIS COMMAND: %02x | %02x | %02x | %02x | %02x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
   int res = write(app_info.fileDescriptor, cmd, 5);
   if (res == -1)
   {

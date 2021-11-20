@@ -353,12 +353,13 @@ int llread(int fd, u_int8_t *buffer)
 //need to do alarm + timeout each time
 int llclose(int fd, int sender)
 {
+  printf("IN LLCLOSE\n");
   int check = -1, conta = 0;
   int cmd_received = FALSE;
   u_int8_t cmd;
-  if (sender != TRANSMITTER || sender != RECEIVER)
+  if (sender != TRANSMITTER && sender != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
-    printf("ERROR");
+    printf("E");
   }
 
   if (sender == TRANSMITTER)
@@ -368,7 +369,7 @@ int llclose(int fd, int sender)
       alarm(link_info.timeout);
       if (send_cmd(1, TRANSMITTER) < 0)
       {
-        printf("ERROR\n");
+        printf("R\n");
       }
 
       if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
@@ -393,7 +394,7 @@ int llclose(int fd, int sender)
     {
       if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
       {
-        printf("ERROR\n");
+        printf("OR\n");
         continue;
       }
       else
@@ -406,13 +407,13 @@ int llclose(int fd, int sender)
 
       if (send_cmd(1, TRANSMITTER) < 0)
       {
-        printf("ERROR\n");
+        printf("RRR\n");
         continue;
       }
 
       if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
       {
-        printf("ERROR\n");
+        printf("ERRR\n");
         continue;
       }
       else

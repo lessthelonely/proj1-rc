@@ -157,7 +157,7 @@ int main(int argc, char **argv)
     }
 
     free(frame);
-/*
+
     //Close connection
     if (llclose(fd, app_info.status) < 0)
     {
@@ -165,6 +165,6 @@ int main(int argc, char **argv)
         free(frame);
         return 1;
     }
-    */
+    
     return 0;
 }

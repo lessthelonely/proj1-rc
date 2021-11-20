@@ -114,6 +114,9 @@ int main(int argc, char **argv)
             }
             fwrite(frame, sizeof(u_int8_t), size, fptr);
         }
+
+        memset(frame,0,strlen(frame));
+
         if (package[0] == CTRL_END)
         {
             printf("Maybe I should read this control package\n");
@@ -128,7 +131,7 @@ int main(int argc, char **argv)
             not_end = TRUE;
         }
     }
-/*
+
     //Close connection
     if (llclose(fd, app_info.status) < 0)
     {
@@ -138,6 +141,6 @@ int main(int argc, char **argv)
         return 1;
     }
     free(package);
-    free(frame);*/
+    free(frame);
     return 0;
 }
