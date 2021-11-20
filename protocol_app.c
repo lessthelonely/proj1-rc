@@ -365,6 +365,7 @@ int llclose(int fd, int sender)
   {
     while (!cmd_received)
     {
+      alarm(link_info.timeout);
       if (send_cmd(1, TRANSMITTER) < 0)
       {
         printf("ERROR\n");
@@ -426,11 +427,11 @@ int llclose(int fd, int sender)
 
   //close fd
   sleep(1);
-  /*if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
+  if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
   {
     perror("tcsetattr");
     return -1;
-  }*/
+  }
   close(fd);
   return 0;
 }

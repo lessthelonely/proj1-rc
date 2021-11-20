@@ -21,6 +21,12 @@ int main(int argc, char **argv)
     int fd = 0;
     app_info.status = TRANSMITTER;
     int index=0;
+    int c_size = MAX_FRAME_SIZE;
+    int n = 0, line_size = 0;
+    char*line[c_size];
+   // u_int8_t *line = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
+    u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
+
     //Parse arguments
     for (int i = 1; i < argc; i++)
     {
@@ -101,11 +107,7 @@ int main(int argc, char **argv)
     }
     printf("I came back to transmitter.c\n");
     //Keep sending Data packages until the end of the file
-    int c_size = MAX_FRAME_SIZE;
-    /*int n = 0, line_size = 0;
-    u_int8_t *line = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
-    u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
-
+    
     printf("STILL HERE\n");
 
     while (TRUE)
@@ -119,12 +121,15 @@ int main(int argc, char **argv)
             break;
         }
 
+        printf("I'm thinking about entering create-data-package\n");
+
         if (create_data_package(n, line_size, line, frame) < 0)
         {
             printf("ERROR\n");
             free(frame);
             return 1;
         }
+        
 
         int frame_size = line_size + 4;
         if (llwrite(fd, frame, frame_size) < 0)
@@ -151,6 +156,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    free(frame);
+/*
     //Close connection
     if (llclose(fd, app_info.status) < 0)
     {
@@ -158,6 +165,6 @@ int main(int argc, char **argv)
         free(frame);
         return 1;
     }
-    free(frame);*/
+    */
     return 0;
 }

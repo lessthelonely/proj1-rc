@@ -23,6 +23,7 @@ Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, pr
 int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
 {
     //ASK TEACHER: check how N, L2 and L1 are calculated
+    printf("I'm in create_data_package\n");
     package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
     package[1] = n % 255;   //%255->does it only want the sequenceNumber or is it, sequenceNumber % 255
     app_info.sequenceNumber = package[1];
@@ -150,8 +151,11 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
 
     for (int i = 1; i < package_size; i++)
     {
+        printf("Holo\n");
+        printf("%02x\n",package[i]);
         if (package[i] == T_FILE_SIZE)
         { //file size
+            printf("Inside is cold\n");
             i++;
             size = package[i];
             i++;
@@ -178,6 +182,8 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
             i += size;
         }
     }
+    printf("wally west\n");
     free(sizes);
+    printf("IRIEI\n");
     return 0;
 }
