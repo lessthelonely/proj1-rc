@@ -156,9 +156,6 @@ int llwrite(int fd, u_int8_t *buffer, int length)
       printf("%02x\n",cmd);
     }
     
-    printf("%d\n",cmd == C_RR_ZERO && s_writer == 0);
-    printf("%d\n",cmd == C_RR_ONE && s_writer == 1);
-
     //RR->means it was accepted
     if ((cmd == C_RR_ZERO && s_writer == 0) || (cmd == C_RR_ONE && s_writer == 1))
     {
@@ -166,6 +163,7 @@ int llwrite(int fd, u_int8_t *buffer, int length)
       deactivate_alarm();
 
       SWITCH(s_writer);
+      printf("POST SWITCH\n");
       /*if (link_info.sequenceNumber == 0)
       {
         link_info.sequenceNumber = 1;
@@ -175,6 +173,7 @@ int llwrite(int fd, u_int8_t *buffer, int length)
         link_info.sequenceNumber = 0;
       }*/
       free(trama);
+      printf("WRITE_LENGTH %d\n",write_length);
       return write_length;
     }
 
@@ -190,8 +189,13 @@ int llwrite(int fd, u_int8_t *buffer, int length)
 
 void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 {
+  printf("IN BCC2 CHECK\n");
     for (int i = 0 ; i < length; i++){
         *BCC2 ^= info_trama[i]; 
+        printf("info_trama %02x\n",info_trama[i]); 
+         printf("BCC2 %02x\n",*BCC2); 
+
+        
     } 
 }
 
@@ -225,7 +229,7 @@ int llread(int fd, u_int8_t *buffer)
     //Need to destuff before storing
     destuffing(buffer, length);
 
-    printf("PACKAGE[0] %02x\n",buffer[0]);
+    printf("PACKAGE[10] %02x\n",buffer[10]);
 
 
     //Check if BCC2 is correct, if not dump info
@@ -240,7 +244,7 @@ int llread(int fd, u_int8_t *buffer)
 
     u_int8_t BCC2;
     BCC2 = 0x00;
-    check_BCC2(buffer,&BCC2,length);
+    check_BCC2(buffer,&BCC2,length-1);
     printf("BCC2 %02x\n",BCC2); 
 
     printf("We alive\n");

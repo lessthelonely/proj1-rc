@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     printf("I came back to transmitter.c\n");
     //Keep sending Data packages until the end of the file
     int c_size = MAX_FRAME_SIZE;
-    int n = 0, line_size = 0;
+    /*int n = 0, line_size = 0;
     u_int8_t *line = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
     u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
 
@@ -158,6 +158,6 @@ int main(int argc, char **argv)
         free(frame);
         return 1;
     }
-    free(frame);
+    free(frame);*/
     return 0;
 }

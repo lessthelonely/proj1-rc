@@ -21,6 +21,8 @@ int main(int argc, char **argv)
     u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
     int fd = 0;
     app_info.status = RECEIVER;
+    char *filename = (char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
+    int file_size;
 
     //Parse arguments
     for (int i = 1; i < argc; i++)
@@ -53,6 +55,7 @@ int main(int argc, char **argv)
     //Gonna receive a Control Package with START
     while (!received_ctrl_pack_start)
     {
+        printf("YTE\n");
         if ((size = llread(fd, package)) < 0)
         {
             printf("ERROR\n");
@@ -61,9 +64,9 @@ int main(int argc, char **argv)
             return 1;
         }
         printf("I'm back in receiver\n");
+    
         printf("PACKAGE[0] %02x\n",package[0]);
-        char *filename[MAX_SIZE];
-        int file_size;
+    
         if (package[0] == CTRL_START)
         { //okay maybe I should have them in constants
            printf("Do I get in here\n");
@@ -74,8 +77,10 @@ int main(int argc, char **argv)
                 free(frame);
                 return 1;
             }
+            printf("HEIRHE\n");
             received_ctrl_pack_start = TRUE;
         }
+        printf("%d\n",received_ctrl_pack_start);
     }
 
     char *new_file = "new_file.txt"; //Should I ask the receiver to tell me the file name?

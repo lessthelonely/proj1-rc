@@ -141,6 +141,7 @@ int read_data_package(u_int8_t *data, u_int8_t *package)
 
 int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size, int package_size)
 {
+    printf("I'M IN READ CONTROL PACKAGE\n");
     u_int8_t *sizes = (u_int8_t*)malloc(sizeof(int));
     int size;
     /*Idk if package is written differently if C is start or end
@@ -149,7 +150,7 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
 
     for (int i = 1; i < package_size; i++)
     {
-        if (package[i] == 0)
+        if (package[i] == T_FILE_SIZE)
         { //file size
             i++;
             size = package[i];
@@ -163,7 +164,7 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
             sscanf(sizes, "%d", file_size);
             i += size;
         }
-        if (package[i] == 1)
+        if (package[i] == T_FILE_NAME)
         { //file name
             i++;
             size = package[i];
