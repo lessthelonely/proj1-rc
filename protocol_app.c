@@ -1,4 +1,3 @@
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -17,8 +16,7 @@ struct termios newtio, oldtio;
 
 /*Returns 0 or -1 in case of error*/
 int llopen(char *porta, int sender)
-{ //Slides uses int porta but it's more practical in char* because it's serial ports are in char*
-
+{ 
   if (sender != TRANSMITTER && sender != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR");
@@ -27,6 +25,14 @@ int llopen(char *porta, int sender)
 
   u_int8_t cmd;
   int res = -1;
+
+  int fd = open(porta, O_RDWR | O_NOCTTY);
+    if (fd < 0)
+    {
+        perror(porta);
+        exit(-1);
+    }
+  app_info.fileDescriptor = fd;
 
   if (tcgetattr(app_info.fileDescriptor, &oldtio) == -1)
   {
@@ -55,6 +61,7 @@ int llopen(char *porta, int sender)
 
   if (sender == TRANSMITTER)
   {
+
     while (res != 0)
     {
       alarm(link_info.timeout);
@@ -63,33 +70,33 @@ int llopen(char *porta, int sender)
         printf("ERROR");
       }
       else
-        printf("Written CMD_SET.");
-
-      if ((res = read_cmd(app_info.fileDescriptor, &cmd)) >= 0)
-        printf("Received UA.");
+      {
+        printf("Written  SET\n");
+      }
+      if ((res = read_cmd(app_info.fileDescriptor, &cmd)) >= 0){
+        printf("Received UA\n");
+      }
     }
 
-    if (res == 0)
+    if (res == 0){ //Received response-->deactivate alarm
       deactivate_alarm();
+    }
   }
 
   else if (sender == RECEIVER)
   {
-    //Set the file descriptor.
-
     while (res < 0)
     {
-      // Establishment of the connection.
       read_cmd(app_info.fileDescriptor, &cmd);
-      printf("Received CMD_SET with success.");
+      printf("Received SET\n");
 
-      if ((res = send_cmd(2, TRANSMITTER)) < 0)
+      if ((res = send_cmd(2, TRANSMITTER)) < 0) //Send UA
       {
         printf("ERROR\n");
       }
       else
       {
-        printf("Sent UA with success\n");
+        printf("Sent UA\n");
       }
     }
   }
@@ -97,45 +104,32 @@ int llopen(char *porta, int sender)
 }
 
 /*Orders protocol to send the Info trauma
-char* buffer is char array we want to transmit so it will the be data part of the info trauma?
+u_int8_t* buffer is the array we want to transmit so it will be the data part of the info trauma
 In order to make this function work->need to build the information trama
-F A C BCC1 char*buffer? BCC2 F
+F A C BCC1 buffer BCC2 F
 Return value should -1 in case of error or number of caracters written
 TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, u_int8_t *buffer, int length)
 {
-  printf("I?M LLWRITE %d\n",length);
- // printf("B %02x\n",buffer[0]); 
   static int s_writer = 0;
   u_int8_t *trama = (u_int8_t *)malloc(MAX_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
-  //printf("IN LLWRITE, size of trama is %d\n",strlen(trama));
   if (length < 0)
   {
-    printf("Value should be positive in order to actually transfer data\n");
+    printf("ERROR\n");
     free(trama);
     return -1;
   }
-  printf("DO I GET HERE????\n");
   int write_length;
   u_int8_t cmd;
-  //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
+  //Need to create info trauma + send it
   while (TRUE)
   { //might need a better condition-->thought for later
     //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
      memset(trama, 0, strlen(trama)); //initialize trama array
-     printf("MAYBE HERE\n");
      write_length = create_info_trama(buffer, trama, length,s_writer);
-     printf("AFTER THIS???\n");
  
     alarm(link_info.timeout);
-    //not gonna call send_cmd because info trama is a special case
-   /* printf("trama %02x\n",trama[0]);
-    printf("write_length %d\n",write_length);*/
-
-    printf("TRAMA[lenght-1] %02x\n",trama[write_length-1]);
-    printf("TRAMA[lenght-2] %02x\n",trama[write_length-2]);
-    printf("TRAMA[lenght-3] %02x\n",trama[write_length-3]);
     if (write(app_info.fileDescriptor, trama, write_length) < 0)
     {
       printf("ERROR");

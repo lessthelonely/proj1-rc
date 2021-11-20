@@ -13,14 +13,14 @@
 #include "../include/protocol_app.h"
 #include "../include/alarm.h"
 
-FILE *fprt;
-//Here we are gonna use llwrite
+//./transmitter /dev/ttySx -t number -n number -b baudrate -f filename
 int main(int argc, char **argv)
 {
     u_int8_t *package[MAX_FRAME_SIZE]; //should it be larger? Yes-->256*L2+L1-->needs to address this, make it larger
-    int fd = 0;
     app_info.status = TRANSMITTER;
     int index=0;
+    FILE *fprt;
+
     //Parse arguments
     for (int i = 1; i < argc; i++)
     {
@@ -60,22 +60,12 @@ int main(int argc, char **argv)
 
     //Open file
     if ((fprt = fopen(filename, "r")) == NULL)
-    { //can I use fopen or should it be open? Also r or rb (read in binary)?
+    { 
         printf("ERROR: file doesn't exist\n");
-        return -1;
+        return 1;
     }
 
-    //printf("SIZE %d\n",size); //for pinguim.gif is 10968
-
-    fd = open(argv[1], O_RDWR | O_NOCTTY);
-    if (fd < 0)
-    {
-        perror(argv[1]);
-        exit(-1);
-    }
-    /*printf("TRANSMITTER FD ");
-    printf("%d\n", fd);*/
-    app_info.fileDescriptor = fd;
+    
 
     install_alarm();
     //Open connection between app and data protocol
@@ -89,44 +79,27 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    //printf("CONTROL PACKAGE SIZE %d\n",package_size);
 
-    //Until here, everything is alright
-    
     int write_length;
-    if ((write_length = llwrite(fd, package, package_size)) < 0)
+    if ((write_length = llwrite(app_info.fileDescriptor, package, package_size)) < 0)
     {
         printf("ERROR\n");
         return 1;
     }
-   // printf("I came back to transmitter.c\n");
     //Keep sending Data packages until the end of the file
     int c_size = FRAME_SIZE-10;
     int n = 0, line_size = 0;
     char*line[c_size];
     u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_SIZE_ALLOC);
 
-    //printf("STILL HERE\n");
-
     while (TRUE)
     {
-        printf("CONDITION %d\n", size - n * c_size);
-        printf("FILEISIZE %d\n",size);
-        printf("SEQUENCENUM %d\n",n);
-        printf("CONTENT SIZE %d\n",c_size);
         if (size - n * c_size < c_size)
         {
-       
-            printf("FILEISIZE %d\n",size);
-            printf("SEQUENCENUM %d\n",n);
-            printf("CONTENT SIZE %d\n",c_size);
             c_size = size % c_size;
-            printf("CONTENT SIZE %d\n",c_size);
         }
         if ((line_size = fread(line, 1, c_size, fprt)) <= 0)
         { //could be an error or could be EOF
-           // printf("you are leaving already aren't you\n");
-            printf("BREAK\n");
             break;
         }
 
@@ -137,28 +110,24 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        printf("RETURNED FROM CREATE DATA PACKAGE\n");
-
         int frame_size = line_size + 4;
-        printf("FRAMESIZE %d\n",frame_size);
-        if (llwrite(fd, frame, frame_size) < 0)
+        if (llwrite(app_info.fileDescriptor, frame, frame_size) < 0)
         {
             printf("ERROR\n");
             free(frame);
             return 1;
         }
-
         n++;
     }
 
     //Send control package with END
     if ((package_size = create_control_package(CTRL_END, filename, size, package)) < 0)
-    { //again should I put the control stuff in constants?
+    { 
         printf("ERROR\n");
         free(frame);
         return 1;
     }
-    if ((write_length = llwrite(fd, package, package_size)) < 0)
+    if ((write_length = llwrite(app_info.fileDescriptor, package, package_size)) < 0)
     {
         printf("ERROR\n");
         free(frame);
@@ -166,12 +135,11 @@ int main(int argc, char **argv)
     }
 
     //Close connection
-    if (llclose(fd, app_info.status) < 0)
+    if (llclose(app_info.fileDescriptor, app_info.status) < 0)
     {
         printf("ERROR\n");
         free(frame);
         return 1;
     }
-    //free(frame);
     return 0;
 }
