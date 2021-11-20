@@ -60,11 +60,13 @@ int main(int argc, char **argv)
             free(frame);
             return 1;
         }
-        received_ctrl_pack_start=TRUE;
+        printf("I'm back in receiver\n");
+        printf("PACKAGE[0] %02x\n",package[0]);
         char *filename[MAX_SIZE];
         int file_size;
         if (package[0] == CTRL_START)
         { //okay maybe I should have them in constants
+           printf("Do I get in here\n");
             if (read_control_package(package, filename, &file_size, size) < 0)
             {
                 printf("ERROR\n");

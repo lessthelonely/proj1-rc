@@ -37,7 +37,7 @@ int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
     return 0;
 }
 
-int create_control_package(int c, char *file_name, int file_size, u_int8_t *package)
+int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int8_t *package)
 {
     printf("IN CREATE CONTROL PACKAGE\n");
     int size = 0;
@@ -46,6 +46,7 @@ int create_control_package(int c, char *file_name, int file_size, u_int8_t *pack
     First one is about the size of the file
     Second about the name of the file
     */
+    /*printf("PACKAGE[0] %02x\n",package[0]);
     printf("file_size ");
     printf("%d\n", file_size);
 
@@ -78,7 +79,39 @@ int create_control_package(int c, char *file_name, int file_size, u_int8_t *pack
     size += strlen(file_name);
     printf("Control package created\n");
     free(lstring);
-    return size;
+    return size;*/
+
+     int size_nameFile = strlen(file_name), curr_pos = 0; 
+    package[1] = T_FILE_NAME; 
+    package[2]= strlen(file_name); 
+
+    if (memcpy(&package[3] , file_name, size_nameFile) == NULL){
+        printf("Not possible to copy file name"); 
+        return -1; 
+    }
+    
+    curr_pos = 3 + size_nameFile;
+    printf("SIZE CURRENT %d\n",curr_pos);
+    char * length_string = (char*)malloc(sizeof(int)); 
+    sprintf(length_string, "%d", file_size);                        // Int to string. 
+
+    package[curr_pos] = T_FILE_SIZE;   
+    package[curr_pos+1] = strlen(length_string);  
+
+    if (memcpy(&package[curr_pos+2], length_string, strlen(length_string)) == NULL){
+        printf("Not possible to copy size of file"); 
+        return -1; 
+    }
+
+    printf("Created control package.");  
+    int sizeP=curr_pos + strlen(length_string) + 2;
+    printf("SIZE CURRENT %d\n",sizeP);
+
+    for(int i =0;i<sizeP;i++){
+        printf("P %02x\n",package[i]); //package is full and data is correct
+    }
+    return sizeP;
+
 }
 
 int read_data_package(u_int8_t *data, u_int8_t *package)
@@ -106,7 +139,7 @@ int read_data_package(u_int8_t *data, u_int8_t *package)
     return size;
 }
 
-int read_control_package(u_int8_t *package, char *file_name, int *file_size, int package_size)
+int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size, int package_size)
 {
     u_int8_t *sizes = (u_int8_t*)malloc(sizeof(int));
     int size;

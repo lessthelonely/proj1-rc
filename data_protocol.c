@@ -546,3 +546,67 @@ int read_test(int fd, u_int8_t *cmd)
   }
   return -1;
 }
+
+int read_frame_i(int fd, u_int8_t *buffer, u_int8_t *CMD){
+    int curr_state= 0, info_length = -1; 
+    u_int8_t byte; 
+
+    printf("--READ FRAME I--\n"); 
+    while(curr_state < 5){
+        if (read(fd, &byte, 1) == -1)
+            return -1; 
+
+        switch (curr_state)
+        { 
+            // RECEIVE FLAG
+            case 0: 
+                info_length = 0; 
+                printf("case 0: %02x\n", byte);
+                if (FLAG == byte) 
+                    curr_state ++;  
+                break; 
+            // RECEIVE ADDR 
+            case 1: 
+                printf("case 1: %02x\n", byte); 
+                if (A_E == byte)
+                    curr_state ++; 
+                else if (FLAG != byte) 
+                    curr_state = 0;  
+                
+                break; 
+
+            // RECEIVE CMD
+            case 2: 
+                printf("case 2: %02x\n", byte);  
+                if (byte == C_I_ONE || byte == C_I_ZERO){ 
+                    *CMD = byte; 
+                    curr_state++; 
+                }
+                else if (byte == FLAG) 
+                    curr_state = 1; 
+                else curr_state = 0;
+
+                break; 
+
+            // RECEIVE BCC1
+            case 3: 
+                printf("case 3: %02x\n", byte);    
+                if (byte == (*CMD ^ A_E))
+                    curr_state ++; 
+                else if (byte == FLAG) 
+                    curr_state = 1;  
+                else 
+                    curr_state = 0; 
+                break;
+            // RECEIVE INFO 
+            case 4:
+                printf("case 4: %02x\n", byte);
+                if (byte != FLAG){
+                    buffer[info_length++] = byte;  
+                }
+                else curr_state ++; 
+            
+        } 
+    }
+    return info_length;
+}

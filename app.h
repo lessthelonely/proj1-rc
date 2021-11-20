@@ -23,7 +23,7 @@ struct applicationLayer app_info;
 
 int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package);
 int read_data_package(u_int8_t*data, u_int8_t *package);
-int create_control_package(int c, char *file_name, int length, u_int8_t*package);
-int read_control_package(u_int8_t *package, char *file_name, int *file_size, int package_size);
+int create_control_package(u_int8_t c, u_int8_t *file_name, int length, u_int8_t*package);
+int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size, int package_size);
 
 #endif

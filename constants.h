@@ -56,6 +56,9 @@
 #define CTRL_START 2
 #define CTRL_END 3
 
+#define T_FILE_SIZE         0
+#define T_FILE_NAME         1
+
 #define SWITCH(s)           !s
 
 #endif

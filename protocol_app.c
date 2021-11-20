@@ -105,6 +105,7 @@ TRANSMITTER is the only one who calls this function
 */
 int llwrite(int fd, u_int8_t *buffer, int length)
 {
+  printf("B %02x\n",buffer[0]); 
   static int s_writer = 0;
   u_int8_t *trama = (u_int8_t *)malloc(MAX_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
   printf("IN LLWRITE, size of trama is %d\n",strlen(trama));
@@ -117,15 +118,15 @@ int llwrite(int fd, u_int8_t *buffer, int length)
   int write_length;
   u_int8_t cmd;
   //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
-  memset(trama, 0, strlen(trama)); //initialize trama array
-  write_length = create_info_trama(buffer, trama, length,s_writer);
   while (TRUE)
   { //might need a better condition-->thought for later
     //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
-    
+     memset(trama, 0, strlen(trama)); //initialize trama array
+     write_length = create_info_trama(buffer, trama, length,s_writer);
+ 
     alarm(link_info.timeout);
     //not gonna call send_cmd because info trama is a special case
-    printf("trama %d\n",strlen(trama));
+    printf("trama %02x\n",trama[0]);
     printf("write_length %d\n",write_length);
     if (write(app_info.fileDescriptor, trama, write_length) < 0)
     {
@@ -189,7 +190,7 @@ int llwrite(int fd, u_int8_t *buffer, int length)
 
 void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 {
-    for (int i = 1 ; i < length; i++){
+    for (int i = 0 ; i < length; i++){
         *BCC2 ^= info_trama[i]; 
     } 
 }
@@ -202,14 +203,14 @@ int llread(int fd, u_int8_t *buffer)
   static int s_reader=0;
   printf("I'm in llread\n");
   int length;
+  u_int8_t cmd;
 
   while (TRUE)
   {
     //read info trama-->can't use read_cmd because of the data segment
-    u_int8_t *info_trama[MAX_FRAME_SIZE];
-    u_int8_t cmd;
+    
     printf("I got here\n");
-    if ((length = read_info_trama(info_trama,&cmd)) < 0)
+    if ((length = read_frame_i(app_info.fileDescriptor,buffer,&cmd)) < 0)
     {
       //should try to read again?
       //or error?
@@ -222,9 +223,10 @@ int llread(int fd, u_int8_t *buffer)
     printf("LENGTH %d\n",length);
 
     //Need to destuff before storing
-    destuffing(info_trama, length);
+    destuffing(buffer, length);
 
-    printf("%02x\n",info_trama[21]);
+    printf("PACKAGE[0] %02x\n",buffer[0]);
+
 
     //Check if BCC2 is correct, if not dump info
     //First we create BCC2 based on the info and then we check if it matches up with the last bit of info trama (that should be BCC2)
@@ -237,8 +239,8 @@ int llread(int fd, u_int8_t *buffer)
     }*/
 
     u_int8_t BCC2;
-    BCC2 = info_trama[0];
-    check_BCC2(info_trama,&BCC2,length);
+    BCC2 = 0x00;
+    check_BCC2(buffer,&BCC2,length);
     printf("BCC2 %02x\n",BCC2); 
 
     printf("We alive\n");
@@ -257,7 +259,7 @@ int llread(int fd, u_int8_t *buffer)
     */
 
     int bcc2_is_not_okay = FALSE;
-    if (BCC2 != info_trama[length - 1])
+    if (BCC2 != buffer[length - 1])
     {
       printf("Wrong BCC2-->gonna send negative ACK\n");
       bcc2_is_not_okay = TRUE;
@@ -448,22 +450,24 @@ int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int s_writer)
 
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
   printf("I'm in create_info_trama\n");
+  printf("B %02x\n",buffer[0]); 
   printf("DATA LENGTH %d\n",length);
   u_int8_t* BCC2 =(u_int8_t*)malloc(sizeof(u_int8_t));
-  BCC2[0] = buffer[0];
-  for (int i = 1; i < length; i++)
-  {
-    *BCC2 ^= buffer[i];
-  }
+  BCC2[0] = 0x00;
+  check_BCC2(buffer,BCC2,length);
   printf("BCC2 %02x\n",*BCC2); 
+  printf("B %02x\n",buffer[0]); 
 
   //We need to stuff the data + BCC2
   int bcc2_length=1;
   int new_bcc2_length = stuffing(BCC2, bcc2_length); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
   printf("I returned from stuffing\n");
+  printf("BCC2 %02x\n",*BCC2); 
 
   int new_data_length = stuffing(buffer, length);
   printf("I returned from stuffing\n");
+  printf("B %02x\n",buffer[0]); 
+
 
   //Assemble info trama
   int new_length = new_data_length + new_bcc2_length + 5; //5 because F A C BCC1 F
@@ -481,10 +485,17 @@ int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int s_writer)
   }
 
   printf("trama built\n");
+  
+  printf("B %02x\n",buffer[0]); 
+  memcpy(&trama[4],buffer,length);
+  printf("trama[4] %02x\n",trama[4]); 
+  printf("B %02x\n",buffer[0]); 
+
 
   int index_bcc2 = length + 4;
   memcpy(&trama[index_bcc2], BCC2, bcc2_length);
   trama[new_length - 1] = FLAG; //second flag is at the end of the frame
   //Need to keep track of pointers to free and think where I can free them*/
+  free(BCC2);
   return new_length;
 }

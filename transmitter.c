@@ -18,9 +18,9 @@ FILE *fprt;
 int main(int argc, char **argv)
 {
     u_int8_t *package[MAX_FRAME_SIZE]; //should it be larger? Yes-->256*L2+L1-->needs to address this, make it larger
-    char *filename[255];
     int fd = 0;
     app_info.status = TRANSMITTER;
+    int index=0;
     //Parse arguments
     for (int i = 1; i < argc; i++)
     {
@@ -47,10 +47,12 @@ int main(int argc, char **argv)
 
             if (!strcmp(argv[i], "-f"))
             {
-                strcpy(filename, argv[i + 1]);
+                index=i+1;
             }
         }
     }
+
+    u_int8_t * filename= argv[index];
 
     struct stat st;
     stat(filename, &st);

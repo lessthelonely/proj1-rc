@@ -34,11 +34,11 @@ Which is better: waste resources with a for cycle or waste it with allocating me
        }
    }
 
-    int nl = more+ length;
+    int nl = more + length;
     frame = (u_int8_t*)malloc(sizeof(u_int8_t)*nl);
     printf("Frame here\n");
 
-    int counter=length;
+    int counter=0;
     int index=0;
     for (int i = 0; i < length; i++)
     {
@@ -60,9 +60,12 @@ Which is better: waste resources with a for cycle or waste it with allocating me
 
         else
         {
+            printf("Here\n");
             frame[index] = buffer[i];
+            printf("frame %02x\n",frame[index]);
         }
     }
+    printf("frame %02x\n",frame[5]); 
     memcpy(buffer,frame,nl);
     printf("I did the process\n");
     printf("I'm leaving\n");
