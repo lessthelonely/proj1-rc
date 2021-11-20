@@ -10,13 +10,15 @@
 #include <string.h>
 #include <stdio.h>
 
-#define BAUDRATE B38400
+#define BAUDRATE B9600
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
 #define BIT(n) 1 << n
 #define MAX_SIZE 255
 #define MAX_FRAME_SIZE 1500 /*ASK TEACHER-->searched frame size tcp/ip for this value*/
+#define MAX_SIZE_ALLOC      16000           /* Max size for the vector. always must be higher than (FRAME_SIZE-10)*2 */ 
+#define FRAME_SIZE          400  
 
 #define FLAG 0x7E
 

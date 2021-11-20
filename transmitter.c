@@ -21,12 +21,6 @@ int main(int argc, char **argv)
     int fd = 0;
     app_info.status = TRANSMITTER;
     int index=0;
-    int c_size = MAX_FRAME_SIZE;
-    int n = 0, line_size = 0;
-    char*line[c_size];
-   // u_int8_t *line = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
-    u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
-
     //Parse arguments
     for (int i = 1; i < argc; i++)
     {
@@ -79,8 +73,8 @@ int main(int argc, char **argv)
         perror(argv[1]);
         exit(-1);
     }
-    printf("TRANSMITTER FD ");
-    printf("%d\n", fd);
+    /*printf("TRANSMITTER FD ");
+    printf("%d\n", fd);*/
     app_info.fileDescriptor = fd;
 
     install_alarm();
@@ -95,7 +89,7 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    printf("CONTROL PACKAGE SIZE %d\n",package_size);
+    //printf("CONTROL PACKAGE SIZE %d\n",package_size);
 
     //Until here, everything is alright
     
@@ -105,23 +99,36 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    printf("I came back to transmitter.c\n");
+   // printf("I came back to transmitter.c\n");
     //Keep sending Data packages until the end of the file
-    
-    printf("STILL HERE\n");
+    int c_size = FRAME_SIZE-10;
+    int n = 0, line_size = 0;
+    char*line[c_size];
+    u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_SIZE_ALLOC);
+
+    //printf("STILL HERE\n");
 
     while (TRUE)
     {
+        printf("CONDITION %d\n", size - n * c_size);
+        printf("FILEISIZE %d\n",size);
+        printf("SEQUENCENUM %d\n",n);
+        printf("CONTENT SIZE %d\n",c_size);
         if (size - n * c_size < c_size)
         {
+       
+            printf("FILEISIZE %d\n",size);
+            printf("SEQUENCENUM %d\n",n);
+            printf("CONTENT SIZE %d\n",c_size);
             c_size = size % c_size;
+            printf("CONTENT SIZE %d\n",c_size);
         }
-        if ((line_size = fread(line, 1, c_size, fprt) <= 0))
+        if ((line_size = fread(line, 1, c_size, fprt)) <= 0)
         { //could be an error or could be EOF
+           // printf("you are leaving already aren't you\n");
+            printf("BREAK\n");
             break;
         }
-
-        printf("I'm thinking about entering create-data-package\n");
 
         if (create_data_package(n, line_size, line, frame) < 0)
         {
@@ -129,9 +136,11 @@ int main(int argc, char **argv)
             free(frame);
             return 1;
         }
-        
+
+        printf("RETURNED FROM CREATE DATA PACKAGE\n");
 
         int frame_size = line_size + 4;
+        printf("FRAMESIZE %d\n",frame_size);
         if (llwrite(fd, frame, frame_size) < 0)
         {
             printf("ERROR\n");
@@ -156,8 +165,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    free(frame);
-
     //Close connection
     if (llclose(fd, app_info.status) < 0)
     {
@@ -165,6 +172,6 @@ int main(int argc, char **argv)
         free(frame);
         return 1;
     }
-    
+    //free(frame);
     return 0;
 }

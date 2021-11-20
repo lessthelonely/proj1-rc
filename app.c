@@ -26,7 +26,6 @@ int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
     printf("I'm in create_data_package\n");
     package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
     package[1] = n % 255;   //%255->does it only want the sequenceNumber or is it, sequenceNumber % 255
-    app_info.sequenceNumber = package[1];
     package[2] = length / 256; //L2
     package[3] = length % 256; //L1
     if (memcpy(&package[4], data, length) == NULL)
@@ -34,13 +33,14 @@ int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
         printf("ERROR\n");
         return -1;
     }
-    printf("Data package was created");
+    printf("LENGTH %d\n",length);
+    //printf("Data package was created");
     return 0;
 }
 
 int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int8_t *package)
 {
-    printf("IN CREATE CONTROL PACKAGE\n");
+    //printf("IN CREATE CONTROL PACKAGE\n");
     int size = 0;
     package[0] = c; //need to be informed if it's supposed to be the start (2) or end (3)-->should I make constants?
     /*Going to have two sets of TLV:
@@ -92,7 +92,7 @@ int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int
     }
     
     curr_pos = 3 + size_nameFile;
-    printf("SIZE CURRENT %d\n",curr_pos);
+    //printf("SIZE CURRENT %d\n",curr_pos);
     char * length_string = (char*)malloc(sizeof(int)); 
     sprintf(length_string, "%d", file_size);                        // Int to string. 
 
@@ -104,13 +104,13 @@ int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int
         return -1; 
     }
 
-    printf("Created control package.");  
+   // printf("Created control package.");  
     int sizeP=curr_pos + strlen(length_string) + 2;
-    printf("SIZE CURRENT %d\n",sizeP);
+    //printf("SIZE CURRENT %d\n",sizeP);
 
-    for(int i =0;i<sizeP;i++){
+    /*for(int i =0;i<sizeP;i++){
         printf("P %02x\n",package[i]); //package is full and data is correct
-    }
+    }*/
     return sizeP;
 
 }
@@ -142,7 +142,7 @@ int read_data_package(u_int8_t *data, u_int8_t *package)
 
 int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size, int package_size)
 {
-    printf("I'M IN READ CONTROL PACKAGE\n");
+    //printf("I'M IN READ CONTROL PACKAGE\n");
     u_int8_t *sizes = (u_int8_t*)malloc(sizeof(int));
     int size;
     /*Idk if package is written differently if C is start or end
@@ -151,11 +151,11 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
 
     for (int i = 1; i < package_size; i++)
     {
-        printf("Holo\n");
-        printf("%02x\n",package[i]);
+        /*printf("Holo\n");
+        printf("%02x\n",package[i]);*/
         if (package[i] == T_FILE_SIZE)
         { //file size
-            printf("Inside is cold\n");
+           // printf("Inside is cold\n");
             i++;
             size = package[i];
             i++;
@@ -166,7 +166,6 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
                 return -1;
             }
             sscanf(sizes, "%d", file_size);
-            printf("FILESIZE: %d\n",file_size);
             i += size;
         }
         if (package[i] == T_FILE_NAME)
@@ -183,8 +182,6 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
             i += size-1;
         }
     }
-    printf("wally west\n");
     free(sizes);
-    printf("IRIEI\n");
     return 0;
 }
