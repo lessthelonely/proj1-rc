@@ -43,13 +43,6 @@ int main(int argc, char **argv)
         }
     }
 
-    if(index==-1){
-        new_file=filename;
-    }
-    else{
-        new_file=argv[index];
-    }
-
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
     llopen(); 
@@ -78,6 +71,13 @@ int main(int argc, char **argv)
             }
             received_ctrl_pack_start = TRUE;
         }
+    }
+
+    if(index==-1){
+        new_file=filename;
+    }
+    else{
+        new_file=argv[index];
     }
 
     
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
 
         if (package[0] == CTRL_END)
         {
-            u_int8_t*end_outputfile[MAX_FRAME_SIZE];
-            int end_file_size;
-            if (read_control_package(package, end_outputfile, &end_file_size, size) < 0)
+            u_int8_t*end[MAX_FRAME_SIZE];
+            int end_fsize;
+            if (read_control_package(package, end, &end_fsize, size) < 0)
             {
                 printf("ERROR\n");
                 free(package);
@@ -127,7 +127,20 @@ int main(int argc, char **argv)
                 return 1;
             }
             not_end = TRUE;
+
+            if(strcmp(end, filename) != 0){
+                printf("ERROR\n");
+            }
+
+            if(file_size != end_fsize){
+                printf("ERROR\n");
+            }
         }
+    }
+
+    if( (fclose(fptr)) == EOF ) {
+        printf("ERROR\n");
+        return 1;
     }
 
     //Close connection
@@ -141,10 +154,6 @@ int main(int argc, char **argv)
     free(package);
     free(frame);
     free(filename);
-    if( (fclose(fptr)) == EOF ) {
-        printf("ERROR\n");
-        return 1;
-    }
    return 0;
 }
 

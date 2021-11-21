@@ -79,7 +79,7 @@ int read_data_package(u_int8_t *data, u_int8_t *package)
 */
 
 
-    if (package[1] > app_info.sequenceNumber)
+    if (package[1] < app_info.sequenceNumber)
     {
         return -1; //repeated packet
     }

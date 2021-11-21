@@ -235,9 +235,7 @@ int llread(u_int8_t *buffer)
     //Info is duplicated
     if ((cmd == C_I_ZERO && seqNum == 1) || (cmd == C_I_ONE && seqNum == 0))
     {
-      if (bcc2_is_not_okay) //BCC2 is wrong 
-      {
-        //Send RR - Slide 14
+       //Send RR - Slide 14
         if (cmd==C_I_ZERO) //I(Ns=0)
         {
           send_cmd(3, TRANSMITTER); //RR(Nr=1)
@@ -247,20 +245,6 @@ int llread(u_int8_t *buffer)
           send_cmd(4, TRANSMITTER);//RR(Nr=0)
         }
       }
-      else
-      {
-        //Info duplicated but BCC2 right
-        //Send RR & dump info
-        if (cmd==C_I_ZERO) //I(Ns=0)
-        {
-          send_cmd(3, TRANSMITTER); //RR(Nr=1)
-        }
-        else //I(Ns=1)
-        {
-          send_cmd(4, TRANSMITTER);//RR(Nr=0)
-        }
-      }
-    }
     else
     { //info is new
       if (bcc2_is_not_okay)
