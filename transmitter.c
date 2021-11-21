@@ -21,6 +21,7 @@ int main(int argc, char **argv)
     app_info.status = TRANSMITTER;
     int index=0;
     FILE *fprt;
+    link_info.baudRate=-1;
 
     //Parse arguments
     for (int i = 1; i < argc; i++)

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define BAUDRATE B9600
+#define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -57,10 +57,5 @@
 #define CTRL_DATA 1
 #define CTRL_START 2
 #define CTRL_END 3
-
-#define T_FILE_SIZE         0
-#define T_FILE_NAME         1
-
-#define SWITCH(s)           !s
 
 #endif

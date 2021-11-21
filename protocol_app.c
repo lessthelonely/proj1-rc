@@ -43,7 +43,13 @@ int llopen()
   }
 
   bzero(&newtio, sizeof(newtio));
-  newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+  if(link_info.baudRate==-1){
+    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+  }
+  else{
+    newtio.c_cflag = link_info.baudRate | CS8 | CLOCAL | CREAD;
+  }
+  
   newtio.c_iflag = IGNPAR;
   newtio.c_oflag = 0;
 
@@ -155,7 +161,12 @@ int llwrite(u_int8_t *buffer, int length)
     if ((cmd == C_RR_ONE && seqNum == 0) || (cmd == C_RR_ZERO && seqNum == 1))
     {
       deactivate_alarm();
-      seqNum=SWITCH(seqNum); //time for a new sequence
+      if(seqNum == 0){
+        seqNum=1;
+      }
+      else{
+        seqNum=0;
+      }
       free(trama);
       return write_length;
     }
@@ -181,7 +192,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 */
 int llread(u_int8_t *buffer)
 {
-  static int s_reader=0,curr_s=0; //keeps track of the sequence Number
+  static int seqNum=0,curr_s=0; //keeps track of the sequence Number
   int length;
   u_int8_t cmd;
 
@@ -189,12 +200,12 @@ int llread(u_int8_t *buffer)
   {
     //read info trama-->can't use read_cmd because of the data segment
     
-    if ((length = read_frame_i(app_info.fileDescriptor,buffer,&cmd)) < 0)
+    if ((length = read_info_trama(buffer,&cmd)) < 0)
     {
     }
     else
     {
-      printf("Read info message with sequence number %d\n", s_reader);
+      printf("Read info message with sequence number %d\n", seqNum);
     }
 
     if(cmd==C_I_ZERO){
@@ -229,7 +240,7 @@ int llread(u_int8_t *buffer)
     }
 
     //Info is duplicated
-    if ((cmd == C_I_ZERO && s_reader == 1) || (cmd == C_I_ONE && s_reader == 0))
+    if ((cmd == C_I_ZERO && seqNum == 1) || (cmd == C_I_ONE && seqNum == 0))
     {
       if (bcc2_is_not_okay) //BCC2 is wrong 
       {
@@ -275,15 +286,15 @@ int llread(u_int8_t *buffer)
       {
         //Send RR + store info
         //Should change sequence number?
-        if (s_reader == 0)
+        if (seqNum == 0)
         {
           send_cmd(3, TRANSMITTER);
-          s_reader=SWITCH(s_reader);
+          seqNum=1;
         }
         else
         {
           send_cmd(4, TRANSMITTER);
-          s_reader=SWITCH(s_reader);
+          seqNum=0;
         }
         return length;
       }
