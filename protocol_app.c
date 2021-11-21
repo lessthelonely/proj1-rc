@@ -179,7 +179,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 /* RECEIVER is the only one who calls this function
    Return length of array of caracters read or -1 in case of error
 */
-int llread(int fd, u_int8_t *buffer)
+int llread(u_int8_t *buffer)
 {
   static int s_reader=0,curr_s=0; //keeps track of the sequence Number
   int length;
@@ -194,7 +194,7 @@ int llread(int fd, u_int8_t *buffer)
     }
     else
     {
-      printf("Read successfully info message with sequence number %d\n", s_reader);
+      printf("Read info message with sequence number %d\n", s_reader);
     }
 
     if(cmd==C_I_ZERO){
@@ -204,35 +204,14 @@ int llread(int fd, u_int8_t *buffer)
       curr_s=1;
     }
 
-
-   printf("LLREAD LENGTH %d\n",length);
-
     //Need to destuff before storing
     int new_length=destuffing(buffer, length);
 
-
-    //printf("PACKAGE[10] %02x\n",buffer[10]);
-
-
     //Check if BCC2 is correct, if not dump info
     //First we create BCC2 based on the info and then we check if it matches up with the last bit of info trama (that should be BCC2)
-    /*char BCC2 = info_trama[0];
-    printf("BCC2 %02x\n",BCC2);
-    for (int i = 1; i < length; i++)
-    {
-      printf("i %d\n",i);
-      BCC2 ^= *info_trama[i];
-    }*/
-
     u_int8_t BCC2;
     BCC2 = 0x00;
-    printf("NEW LENGTH AFTER DESTUFFING %d\n",new_length);
     check_BCC2(buffer,&BCC2,new_length-1);
-    printf("CHECKING %02x\n",BCC2); 
-
-   /* printf("BCC2 %02x\n",BCC2); 
-
-    printf("We alive\n");*/
 
     /*Okay let's interpret slide 11:
     We need to check if BCC2 is right however maybe this is not the first thing we need to do
@@ -240,41 +219,27 @@ int llread(int fd, u_int8_t *buffer)
     We send RR: 1) if BCC2 is wrong but info is duplicated
                 2) if BCC2 is right but info is duplicated-->just dump it afterwards
                 3) if BCC2 is right and info is new-->save it
-    
-    Maybe let's check if info is duplicated first and then see if BCC2 is wrong
-    Never mind, I'll do BCC2 first but think I need a bool 
-    so I have no idea what duplicate means
-    I thought maybe it was info trama having a C_I_ZERO when the sequence number was one...but not sure  
-    */
+     */
 
     int bcc2_is_not_okay = FALSE;
     if (BCC2 != buffer[new_length - 1])
     {
-      printf("Wrong BCC2-->gonna send negative ACK\n");
+      printf("Wrong BCC2 - gonna send negative ACK (REJ)\n");
       bcc2_is_not_okay = TRUE;
     }
 
-   /* printf("%02x\n",cmd);
-    printf("%d\n",s_reader);
-*/
     //Info is duplicated
     if ((cmd == C_I_ZERO && s_reader == 1) || (cmd == C_I_ONE && s_reader == 0))
     {
-      //printf("HERERWRWR\n");
       if (bcc2_is_not_okay) //BCC2 is wrong 
       {
         //Send RR
         if (curr_s == 0)
         {
-          /*When analyzing the whole program I don't think we will ever use A_R because I don't think receiver sends
-        a command without it being an answer to the transmitter but in those cases we should use A_E
-        ASK THE TEACHER-->when do we use A_R (00000001 (0x01) em Comandos enviados pelo Receptor e Respostas 
-        enviadas pelo Emissor)->what qualifies as this*/
           send_cmd(3, TRANSMITTER);
         }
         else
         {
-        //  printf("I'm here\n");
           send_cmd(4, TRANSMITTER);
         }
       }
@@ -314,15 +279,12 @@ int llread(int fd, u_int8_t *buffer)
         {
           send_cmd(3, TRANSMITTER);
           s_reader=SWITCH(s_reader);
-         // printf("HEeew\n");
         }
         else
         {
-         // printf("HIHRI$HR\n");
           send_cmd(4, TRANSMITTER);
           s_reader=SWITCH(s_reader);
         }
-        //printf("LENGTH %d\n",length);
         return length;
       }
     }
@@ -332,7 +294,6 @@ int llread(int fd, u_int8_t *buffer)
 
 int llclose() //Don't need any of the arguments in the slides because all the data is stored in data structures 
 {
-  int check = -1, conta = 0;
   int cmd_received = FALSE;
   u_int8_t cmd;
   if (app_info.status!= TRANSMITTER && app_info.status != RECEIVER)

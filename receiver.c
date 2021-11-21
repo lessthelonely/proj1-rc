@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     //Gonna receive a Control Package with START
     while (!received_ctrl_pack_start)
     {
-        if ((size = llread(app_info.fileDescriptor, package)) < 0)
+        if ((size = llread(package)) < 0)
         {
             printf("ERROR\n");
             free(package);
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     int not_end = FALSE;
     while (!not_end)
     {
-        if ((size = llread(app_info.fileDescriptor, package)) < 0)
+        if ((size = llread(package)) < 0)
         {
             printf("ERROR\n");
             free(package);
