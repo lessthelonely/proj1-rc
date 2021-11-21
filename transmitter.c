@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     install_alarm();
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    llopen(link_info.port, app_info.status);
+    llopen();
 
     //Send control package with START
     int package_size;
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     }
 
     //Close connection
-    if (llclose(app_info.fileDescriptor, app_info.status) < 0)
+    if (llclose() < 0)
     {
         printf("ERROR\n");
         return 1;

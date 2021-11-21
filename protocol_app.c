@@ -16,10 +16,9 @@
 struct termios newtio, oldtio;
 
 /*Returns 0 or -1 in case of error*/
-int llopen(char *porta, int sender)
-{ //Slides uses int porta but it's more practical in char* because it's serial ports are in char*
-
-  if (sender != TRANSMITTER && sender != RECEIVER)
+int llopen()
+{ //Don't need any of the arguments in the slides because all the data is stored in data structures 
+  if (app_info.status != TRANSMITTER && app_info.status != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR");
     return -1;
@@ -28,10 +27,10 @@ int llopen(char *porta, int sender)
   u_int8_t cmd;
   int res = -1;
 
-  int fd = open(porta, O_RDWR | O_NOCTTY);
+  int fd = open(link_info.port, O_RDWR | O_NOCTTY);
     if (fd < 0)
     {
-        perror(porta);
+        perror(link_info.port);
         return -1;
     }
 
@@ -62,7 +61,7 @@ int llopen(char *porta, int sender)
     return -1;
   }
 
-  if (sender == TRANSMITTER)
+  if (app_info.status == TRANSMITTER)
   {
     while (res != 0)
     {
@@ -87,7 +86,7 @@ int llopen(char *porta, int sender)
       
   }
 
-  else if (sender == RECEIVER)
+  else 
   {
     while (res < 0)
     {
@@ -143,7 +142,7 @@ int llwrite(u_int8_t *buffer, int length)
       printf("Sent message with sequence number %d\n", seqNum);
     }
 
-    if (read_test(app_info.fileDescriptor, &cmd) < 0)
+    if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
     {
       printf("ERROR");
     }
@@ -169,6 +168,7 @@ int llwrite(u_int8_t *buffer, int length)
   }
 }
 
+//Creates BCC2 by doing the XOR operation with all the components of the trama(data) array
 void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 {
     for (int i = 0 ; i < length; i++){
@@ -181,8 +181,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 */
 int llread(int fd, u_int8_t *buffer)
 {
-  static int s_reader=0,curr_s=0;
- // printf("I'm in llread\n");
+  static int s_reader=0,curr_s=0; //keeps track of the sequence Number
   int length;
   u_int8_t cmd;
 
@@ -334,33 +333,27 @@ int llread(int fd, u_int8_t *buffer)
   return -1;
 }
 
-//need to send DISC message and get that message back and then send UA
-//also close fd of course
-//in slides llclose just has fd as a parameter but we probably should specify if whoever called this function
-//since transmitter has to send DISC to receiver, however receiver doesn't have to do that
-//need to do alarm + timeout each time
-int llclose(int fd, int sender)
+int llclose() //Don't need any of the arguments in the slides because all the data is stored in data structures 
 {
-  //printf("IN LLCLOSE\n");
   int check = -1, conta = 0;
   int cmd_received = FALSE;
   u_int8_t cmd;
-  if (sender != TRANSMITTER && sender != RECEIVER)
+  if (app_info.status!= TRANSMITTER && app_info.status != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
-    printf("E");
+    printf("ERROR\n");
   }
 
-  if (sender == TRANSMITTER)
+  if (app_info.status == TRANSMITTER)
   {
     while (!cmd_received)
     {
       alarm(link_info.timeout);
-      if (send_cmd(1, TRANSMITTER) < 0)
+      if (send_cmd(1, TRANSMITTER) < 0) //Send DISC
       {
-        printf("R\n");
+        printf("ERROR\n");
       }
 
-      if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
+      if (read_cmd(app_info.fileDescriptor, &cmd) < 0) //Read DISC from Receiver
       {
         printf("Try again\n");
       }
@@ -370,9 +363,9 @@ int llclose(int fd, int sender)
         cmd_received = TRUE;
       }
 
-      if (send_cmd(2, TRANSMITTER) < 0)
+      if (send_cmd(2, TRANSMITTER) < 0) //Send UA
       {
-        printf("Couldn't send UA, turning connection off\n");
+        printf("ERROR\n");
       }
     }
   }
@@ -380,9 +373,9 @@ int llclose(int fd, int sender)
   {
     while (!cmd_received)
     {
-      if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
+      if (read_cmd(app_info.fileDescriptor, &cmd) < 0) //Read DISC
       {
-        printf("OR\n");
+        printf("ERROR\n");
         continue;
       }
       else
@@ -393,15 +386,15 @@ int llclose(int fd, int sender)
         }
       }
 
-      if (send_cmd(1, TRANSMITTER) < 0)
+      if (send_cmd(1, TRANSMITTER) < 0) //Send DISC back
       {
-        printf("RRR\n");
+        printf("ERROR\n");
         continue;
       }
 
-      if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
+      if (read_cmd(app_info.fileDescriptor, &cmd) < 0) //Read UA
       {
-        printf("ERRR\n");
+        printf("ERROR\n");
         continue;
       }
       else
@@ -416,12 +409,12 @@ int llclose(int fd, int sender)
 
   //close fd
   sleep(1);
-  if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
+  if (tcsetattr(app_info.fileDescriptor, TCSANOW, &oldtio) == -1)
   {
     perror("tcsetattr");
     return -1;
   }
-  close(fd);
+  close(app_info.fileDescriptor);
   return 0;
 }
 
@@ -429,7 +422,7 @@ int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int seqNum)
 {
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
   u_int8_t* BCC2 =(u_int8_t*)malloc(sizeof(u_int8_t));
-  BCC2[0] = 0x00;
+  BCC2[0] = 0x00; //neutral operand
   check_BCC2(buffer,BCC2,length);
 
   //We need to stuff the data + BCC2

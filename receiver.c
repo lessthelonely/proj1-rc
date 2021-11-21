@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    llopen(link_info.port, app_info.status); 
+    llopen(); 
 
     int size;
     int received_ctrl_pack_start = FALSE;
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     }
 
     //Close connection
-    if (llclose(app_info.fileDescriptor, app_info.status) < 0)
+    if (llclose() < 0)
     {
         printf("ERROR\n");
         free(package);
