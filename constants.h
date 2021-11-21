@@ -17,11 +17,13 @@
 #define BIT(n) 1 << n
 #define MAX_SIZE 255
 #define MAX_FRAME_SIZE 1500 /*ASK TEACHER-->searched frame size tcp/ip for this value*/
+#define MAX_SIZE_ALLOC      16000           /* Max size for the vector. always must be higher than (FRAME_SIZE-10)*2 */ 
+#define FRAME_SIZE          400  
 
 #define FLAG 0x7E
 
 #define A_E 0x03 //Comandos do Emissor e Respostas do Receptor
-#define A_R 0x01 //Comandos do Receptor e Respostas do Emissor--->we don't need this but teacher will confirm
+#define A_R 0x01 //Comandos do Receptor e Respostas do Emissor
 
 #define C_SET 0x03
 #define C_DISC 0x0B

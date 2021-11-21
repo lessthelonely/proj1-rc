@@ -3,7 +3,7 @@
 
 //We should use char** because it's a pointer to char*
 
-int stuffing(char* buffer, int length, char** frame);
-int destuffing(char* buffer, int length,char** frame);
+int stuffing(u_int8_t* buffer, int length);
+int destuffing(u_int8_t* buffer, int length);
 
 #endif

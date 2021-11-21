@@ -13,9 +13,6 @@ typedef enum
 } messageState;
 
 int send_cmd(int command, int sender);
-int read_info_trama(char* info_trama,char*cmd);
-int read_cmd();
-int read_cmd(char*cmd);
-void atende();
-
+int read_info_trama(u_int8_t* info_trama,u_int8_t*cmd);
+int read_cmd(u_int8_t* cmd);
 #endif
