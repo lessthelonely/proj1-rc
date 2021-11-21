@@ -75,7 +75,7 @@ int llopen()
         printf("Wrote SET\n");
       }
 
-      if ((res = read_cmd(app_info.fileDescriptor, &cmd)) >= 0){
+      if ((res = read_cmd(&cmd)) >= 0){
         printf("Received UA\n");
       }
     }
@@ -90,7 +90,7 @@ int llopen()
   {
     while (res < 0)
     {
-      read_cmd(app_info.fileDescriptor, &cmd);
+      read_cmd(&cmd);
       printf("Read SET\n");
 
       if ((res = send_cmd(2, TRANSMITTER)) < 0)
@@ -142,7 +142,7 @@ int llwrite(u_int8_t *buffer, int length)
       printf("Sent message with sequence number %d\n", seqNum);
     }
 
-    if (read_cmd(app_info.fileDescriptor, &cmd) < 0)
+    if (read_cmd(&cmd) < 0)
     {
       printf("ERROR");
     }
@@ -189,11 +189,8 @@ int llread(int fd, u_int8_t *buffer)
   {
     //read info trama-->can't use read_cmd because of the data segment
     
-    //printf("I got here\n");
     if ((length = read_frame_i(app_info.fileDescriptor,buffer,&cmd)) < 0)
     {
-      //should try to read again?
-      //or error?
     }
     else
     {
@@ -353,7 +350,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
         printf("ERROR\n");
       }
 
-      if (read_cmd(app_info.fileDescriptor, &cmd) < 0) //Read DISC from Receiver
+      if (read_cmd(&cmd) < 0) //Read DISC from Receiver
       {
         printf("Try again\n");
       }
@@ -373,7 +370,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
   {
     while (!cmd_received)
     {
-      if (read_cmd(app_info.fileDescriptor, &cmd) < 0) //Read DISC
+      if (read_cmd(&cmd) < 0) //Read DISC
       {
         printf("ERROR\n");
         continue;
@@ -392,7 +389,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
         continue;
       }
 
-      if (read_cmd(app_info.fileDescriptor, &cmd) < 0) //Read UA
+      if (read_cmd(&cmd) < 0) //Read UA
       {
         printf("ERROR\n");
         continue;

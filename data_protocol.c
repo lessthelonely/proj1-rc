@@ -275,7 +275,7 @@ int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd)
   return -1;
 }
 
-int read_cmd(int fd, u_int8_t*cmd)
+int read_cmd(u_int8_t*cmd)
 {
   u_int8_t byte_received;
   messageState state = START;
@@ -285,7 +285,7 @@ int read_cmd(int fd, u_int8_t*cmd)
   while (TRUE)
   {
 
-    if (read(fd, &byte_received, 1) == -1)
+    if (read(app_info.fileDescriptor, &byte_received, 1) == -1)
       return -1;
 
   //  printf("ENTERING STATE MACHINE\n");
@@ -374,71 +374,6 @@ int read_cmd(int fd, u_int8_t*cmd)
     }
   }
   return -1;
-}
-
-int read_frame_supervision(int fd, u_int8_t *CMD){
-   int curr_state = 0; /* byte that is being read. From 0 to 4.*/
-  u_int8_t byte;
-
-   // printf("--READ SUPERVISION FRAME [RR, REJ]--\n"); 
-    while (TRUE)
-    {
-        if (read(fd, &byte, 1) == -1) 
-            return -1;
-
-        switch (curr_state)
-        {
-        // RECEIVE FLAG
-        case 0: 
-
-           // printf("case 0: %02x\n", byte);
-            if (byte == FLAG)
-                curr_state++;
-            break;
-
-        // RECEIVE ADDR
-        case 1:
-           // printf("case 1: %02x\n", byte);
-            if (byte == A_E)
-                curr_state++;
-            else if (byte != FLAG)
-                curr_state = 0;
-            break;
-
-        // RECEIVE CMD
-        case 2:
-            //printf("case 2: %02x\n", byte);
-            if (byte == C_REJ_ONE || byte == C_RR_ONE || byte == C_RR_ZERO || byte == C_REJ_ZERO){
-                *CMD = byte; 
-               // printf("%02x\n", *CMD);
-                curr_state++;
-            } 
-            else if (byte == FLAG)
-                curr_state = 1;
-            else
-                curr_state = 0;
-            break;
-        // RECEIVE BCC
-        case 3:
-           // printf("case 3: %02x\n", byte);
-            if (byte == (*CMD ^ A_E))
-                curr_state++;
-            else if (byte == FLAG)
-                curr_state = 1;
-            else
-                curr_state = 0;
-            break;
-
-        // RECEIVE FLAG
-        case 4:
-           // printf("case 4: %02x\n", byte);
-            if (byte == FLAG) 
-                return 0; 
-            else
-                curr_state = 0;
-        }
-    }
-    return curr_state;
 }
 
 int read_frame_i(int fd, u_int8_t *buffer, u_int8_t *CMD){
