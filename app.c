@@ -22,10 +22,8 @@ Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, pr
 */
 int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
 {
-    //ASK TEACHER: check how N, L2 and L1 are calculated
-    printf("I'm in create_data_package\n");
     package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
-    package[1] = n % 255;   //%255->does it only want the sequenceNumber or is it, sequenceNumber % 255
+    package[1] = n % 255;  
     package[2] = length / 256; //L2
     package[3] = length % 256; //L1
     if (memcpy(&package[4], data, length) == NULL)
@@ -33,33 +31,23 @@ int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
         printf("ERROR\n");
         return -1;
     }
-    printf("LENGTH %d\n",length);
-    //printf("Data package was created");
     return 0;
 }
 
 int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int8_t *package)
 {
-    //printf("IN CREATE CONTROL PACKAGE\n");
     int size = 0;
     package[0] = c; //need to be informed if it's supposed to be the start (2) or end (3)-->should I make constants?
     /*Going to have two sets of TLV:
     First one is about the size of the file
     Second about the name of the file
     */
-    /*printf("PACKAGE[0] %02x\n",package[0]);
-    printf("file_size ");
-    printf("%d\n", file_size);
-
     char *lstring = (char *)malloc(sizeof(int));
     sprintf(lstring, "%d", file_size);
 
-    printf("lstring ");
-    printf("%s\n", lstring);
-
-    package[1] = 0; //file size (should it be a constant?)
-    package[2] = strlen(lstring);
-    if (memcpy(&package[3], lstring, strlen(lstring)) == NULL)
+    package[1] = 0; //file size (Type)
+    package[2] = strlen(lstring); //size of file size (Length)
+    if (memcpy(&package[3], lstring, strlen(lstring)) == NULL) //file size (Value)
     {
         printf("ERROR\n");
         free(lstring);
@@ -67,52 +55,19 @@ int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int
     }
     size = 3 + strlen(lstring);
 
-    package[size] = 1;
+    package[size] = 1; //file name (Type)
     size++;
-    package[size] = strlen(file_name);
+    package[size] = strlen(file_name);//size of file name (Length)
     size++;
-    if (memcpy(&package[size], file_name, strlen(file_name)) == NULL)
+    if (memcpy(&package[size], file_name, strlen(file_name)) == NULL) //file name (Value)
     {
         printf("ERROR\n");
         free(lstring);
         return -1;
     }
     size += strlen(file_name);
-    printf("Control package created\n");
     free(lstring);
-    return size;*/
-
-     int size_nameFile = strlen(file_name), curr_pos = 0; 
-    package[1] = T_FILE_NAME; 
-    package[2]= strlen(file_name); 
-
-    if (memcpy(&package[3] , file_name, size_nameFile) == NULL){
-        printf("Not possible to copy file name"); 
-        return -1; 
-    }
-    
-    curr_pos = 3 + size_nameFile;
-    //printf("SIZE CURRENT %d\n",curr_pos);
-    char * length_string = (char*)malloc(sizeof(int)); 
-    sprintf(length_string, "%d", file_size);                        // Int to string. 
-
-    package[curr_pos] = T_FILE_SIZE;   
-    package[curr_pos+1] = strlen(length_string);  
-
-    if (memcpy(&package[curr_pos+2], length_string, strlen(length_string)) == NULL){
-        printf("Not possible to copy size of file"); 
-        return -1; 
-    }
-
-   // printf("Created control package.");  
-    int sizeP=curr_pos + strlen(length_string) + 2;
-    //printf("SIZE CURRENT %d\n",sizeP);
-
-    /*for(int i =0;i<sizeP;i++){
-        printf("P %02x\n",package[i]); //package is full and data is correct
-    }*/
-    return sizeP;
-
+    return size;
 }
 
 int read_data_package(u_int8_t *data, u_int8_t *package)
@@ -123,7 +78,6 @@ int read_data_package(u_int8_t *data, u_int8_t *package)
     Rest of the package is gonna be copied into char*data because data
 */
 
-    //What if there's more values to sequence number than 0 and 1 and that's why we got the %255 stuff? Idk tbh
 
     if (package[1] > app_info.sequenceNumber)
     {
@@ -142,20 +96,12 @@ int read_data_package(u_int8_t *data, u_int8_t *package)
 
 int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size, int package_size)
 {
-    //printf("I'M IN READ CONTROL PACKAGE\n");
     u_int8_t *sizes = (u_int8_t*)malloc(sizeof(int));
     int size;
-    /*Idk if package is written differently if C is start or end
-    Let's assume it's the same I guess
-    I think if it's start, then you send the data package and if it's stop...you don't? Don't really know*/
-
     for (int i = 1; i < package_size; i++)
     {
-        /*printf("Holo\n");
-        printf("%02x\n",package[i]);*/
-        if (package[i] == T_FILE_SIZE)
+        if (package[i] == 0)
         { //file size
-           // printf("Inside is cold\n");
             i++;
             size = package[i];
             i++;
@@ -168,7 +114,7 @@ int read_control_package(u_int8_t *package, u_int8_t *file_name, int *file_size,
             sscanf(sizes, "%d", file_size);
             i += size;
         }
-        if (package[i] == T_FILE_NAME)
+        if (package[i] == 1)
         { //file name
             i++;
             size = package[i];
