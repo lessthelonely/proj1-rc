@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     }
 
     int write_length;
-    if ((write_length = llwrite(app_info.fileDescriptor, package, package_size)) < 0)
+    if ((write_length = llwrite(package, package_size)) < 0)
     {
         printf("ERROR\n");
         return 1;
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         }
 
         int frame_size = line_size + 4;
-        if (llwrite(app_info.fileDescriptor, frame, frame_size) < 0)
+        if (llwrite(frame, frame_size) < 0)
         {
             printf("ERROR\n");
             return 1;
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    if ((write_length = llwrite(app_info.fileDescriptor, package, package_size)) < 0)
+    if ((write_length = llwrite(package, package_size)) < 0)
     {
         printf("ERROR\n");
         return 1;

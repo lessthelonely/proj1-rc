@@ -69,28 +69,30 @@ int llopen(char *porta, int sender)
       alarm(link_info.timeout);
       if (send_cmd(0, TRANSMITTER) < 0)
       { //Send SET
-        printf("ERROR");
+        printf("ERROR\n");
       }
       else
-        printf("Written CMD_SET.");
+      {
+        printf("Wrote SET\n");
+      }
 
-      if ((res = read_cmd(app_info.fileDescriptor, &cmd)) >= 0)
-        printf("Received UA.");
+      if ((res = read_cmd(app_info.fileDescriptor, &cmd)) >= 0){
+        printf("Received UA\n");
+      }
     }
 
-    if (res == 0)
-      deactivate_alarm();
+    if (res == 0){
+      deactivate_alarm(); //We got a response so timeout is over
+    }
+      
   }
 
   else if (sender == RECEIVER)
   {
-    //Set the file descriptor.
-
     while (res < 0)
     {
-      // Establishment of the connection.
       read_cmd(app_info.fileDescriptor, &cmd);
-      printf("Received CMD_SET with success.");
+      printf("Read SET\n");
 
       if ((res = send_cmd(2, TRANSMITTER)) < 0)
       {
@@ -98,7 +100,7 @@ int llopen(char *porta, int sender)
       }
       else
       {
-        printf("Sent UA with success\n");
+        printf("Sent UA\n");
       }
     }
   }
@@ -112,56 +114,34 @@ F A C BCC1 char*buffer? BCC2 F
 Return value should -1 in case of error or number of caracters written
 TRANSMITTER is the only one who calls this function
 */
-int llwrite(int fd, u_int8_t *buffer, int length)
+int llwrite(u_int8_t *buffer, int length)
 {
-  printf("I?M LLWRITE %d\n",length);
- // printf("B %02x\n",buffer[0]); 
-  static int s_writer = 0;
+  static int seqNum = 0; //keeps track of sequence number
   u_int8_t *trama = (u_int8_t *)malloc(MAX_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
-  //printf("IN LLWRITE, size of trama is %d\n",strlen(trama));
   if (length < 0)
   {
     printf("Value should be positive in order to actually transfer data\n");
     free(trama);
     return -1;
   }
-  printf("DO I GET HERE????\n");
   int write_length;
   u_int8_t cmd;
-  //Need to create info trauma + send it(should use the timeout mechanic here right? Might need to put alarm in a different file and change the routine)
+  //Need to create info trauma + send it
   while (TRUE)
-  { //might need a better condition-->thought for later
-    //We initilized trauma array with the biggest possible size (MAX_SIZE) however most times, there won't actually be 255 bits to be written so we need the actual correct number in order to return it to fulfill the function's purpose
+  { 
+    //We initilized trauma array with the biggest possible size (MAX_SIZE) 
      memset(trama, 0, strlen(trama)); //initialize trama array
-     printf("MAYBE HERE\n");
-     write_length = create_info_trama(buffer, trama, length,s_writer);
-     printf("AFTER THIS???\n");
+     write_length = create_info_trama(buffer, trama, length,seqNum);
  
     alarm(link_info.timeout);
-    //not gonna call send_cmd because info trama is a special case
-   /* printf("trama %02x\n",trama[0]);
-    printf("write_length %d\n",write_length);*/
-
-    printf("TRAMA[lenght-1] %02x\n",trama[write_length-1]);
-    printf("TRAMA[lenght-2] %02x\n",trama[write_length-2]);
-    printf("TRAMA[lenght-3] %02x\n",trama[write_length-3]);
     if (write(app_info.fileDescriptor, trama, write_length) < 0)
     {
       printf("ERROR");
     }
     else
     {
-      //Okay only TRANSMITTER sends info trama however it can send sequence number 0 or 1
-      //Sends sequence number 0 first and then number 1 (slide 14 Ns=0/1)
-      printf("TRANSMITTER sent sucessfully sequence number %d\n", s_writer);
+      printf("Sent message with sequence number %d\n", seqNum);
     }
-
-    //need to change read_cmd in order for it to return the command that was written
-    //Not the return...the return still needs to be an int in order to see if there was an error or not
-    //I need to add a parameter to read_cmd, maybe a pointer?
-    //need to know if receiver sent back a RR or REJ
-    //do I need to check if RR_one is sent when sequence number is one and all that?
-    //Maybe it's better
 
     if (read_test(app_info.fileDescriptor, &cmd) < 0)
     {
@@ -169,50 +149,30 @@ int llwrite(int fd, u_int8_t *buffer, int length)
     }
     else
     {
-      printf("Command was read sucessfully sequence number %d\n", !s_writer);
-     // printf("%02x\n",cmd);
+      printf("Read ACK with sequence number %d\n", !seqNum);
     }
     
     //RR->means it was accepted
-    if ((cmd == C_RR_ONE && s_writer == 0) || (cmd == C_RR_ZERO && s_writer == 1))
+    if ((cmd == C_RR_ONE && seqNum == 0) || (cmd == C_RR_ZERO && seqNum == 1))
     {
-      //printf("HIEHR\n");
       deactivate_alarm();
-
-      s_writer=SWITCH(s_writer);
-      //printf("POST SWITCH\n");
-      /*if (link_info.sequenceNumber == 0)
-      {
-        link_info.sequenceNumber = 1;
-      }
-      else
-      {
-        link_info.sequenceNumber = 0;
-      }*/
+      seqNum=SWITCH(seqNum); //time for a new sequence
       free(trama);
-      //printf("WRITE_LENGTH %d\n",write_length);
       return write_length;
     }
 
     if (cmd == C_REJ_ZERO || cmd == C_REJ_ONE)
     {
       deactivate_alarm();
-      printf("Received REJ\n");
-      free(trama);
-      return -1; //wait is it consider error if we get REJ?
+      printf("Received REJ\n");//Need to retransmit message
     }
   }
 }
 
 void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 {
-  //printf("IN BCC2 CHECK\n");
     for (int i = 0 ; i < length; i++){
-        *BCC2 ^= info_trama[i]; 
-        printf("info_trama %02x\n %d\n",info_trama[i],i); 
-        /* printf("BCC2 %02x\n",*BCC2); */
-
-        
+        *BCC2 ^= info_trama[i];         
     } 
 }
 
@@ -465,48 +425,23 @@ int llclose(int fd, int sender)
   return 0;
 }
 
-int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int s_writer)
+int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int seqNum)
 {
-  /* Okay like got to add flag, A_E because it's the transmitter that sends info, C_I_ZERO (check slide 14) but wait it's
-  C_I_ZERO for the first time, should I make a counter to see if it's the first or second time transmitter is sending the info trama
-  doesn't make sense to make a new function just because of that-->let's do it with C_I_ZERO first just to structure it,
-  BCC1 is BCC_C_I_ZERO(in the case that C==C_I_ZERO), then char*buffer (I think), BCC2 is going to be obtained by a for cycle 
-  with every char from the char*buffer array (doing xor in all those guys) and finally adding another flag
-  CAREFUL--->this is where bit stuffing comes in (and destuffing)
-  Think it's after the info trama is assembled tho because slide 7 says "(antes de stuffing e após destuffing)"
-  
-  Okay new idea about stuffing (and destuffing):
-    We have the original data->this data goes through stuffing before it's sent to the receiver because it's a way to ensure 
-  that the transmission starts and ends at the correct places
-    Receiver gets the trama stuffed, before it stores the information tho, sends the trama to go through the destuffing process
-  With that in mind makes sense to have stuffing and destuffing in a separate file (maybe...)
-  */
-
   //Let's start by defining BCC2-->it will need to be stuffed (like data) but according to slide 7 and 13, it is created before
-  /*printf("I'm in create_info_trama\n");
-  printf("B %02x\n",buffer[0]); 
-  printf("DATA LENGTH %d\n",length);*/
   u_int8_t* BCC2 =(u_int8_t*)malloc(sizeof(u_int8_t));
   BCC2[0] = 0x00;
   check_BCC2(buffer,BCC2,length);
 
   //We need to stuff the data + BCC2
   int bcc2_length=1;
-  int new_bcc2_length = stuffing(BCC2, bcc2_length); //I mean BCC2 has length==1 sooooo I don't really know why it's necessary to stuff them tbh but I know it is according to the slides
-  printf("I returned from stuffing\n");
-  printf("BCC2 %02x\n",*BCC2); 
-
-   printf("BEFORE STUFFING %02x\n",buffer[length-1]);
+  int new_bcc2_length = stuffing(BCC2, bcc2_length); 
   int new_data_length = stuffing(buffer, length);
-  printf("AFTER STUFFING %02x\n",buffer[new_data_length-1]);
- 
-
 
   //Assemble info trama
   int new_length = new_data_length + new_bcc2_length + 5; //5 because F A C BCC1 F
   trama[0] = FLAG;
   trama[1] = A_E;
-  if (s_writer == 0)
+  if (seqNum == 0)
   {
     trama[2] = C_I_ZERO;
     trama[3] = BCC_C_I_ZERO;
@@ -523,7 +458,5 @@ int create_info_trama(u_int8_t *buffer, u_int8_t*trama, int length,int s_writer)
   int index_bcc2 = new_data_length + 4;
   memcpy(&trama[index_bcc2], BCC2, new_bcc2_length);
   trama[new_length - 1] = FLAG; //second flag is at the end of the frame
-  //Need to keep track of pointers to free and think where I can free them*/
-  printf("NEW LENGTH %d\n",new_length);
   return new_length;
 }
