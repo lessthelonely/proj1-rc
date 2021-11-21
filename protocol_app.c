@@ -192,7 +192,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 */
 int llread(u_int8_t *buffer)
 {
-  static int seqNum=0,curr_s=0; //keeps track of the sequence Number
+  static int seqNum=0; //keeps track of the sequence Number
   int length;
   u_int8_t cmd;
 
@@ -206,13 +206,6 @@ int llread(u_int8_t *buffer)
     else
     {
       printf("Read info message with sequence number %d\n", seqNum);
-    }
-
-    if(cmd==C_I_ZERO){
-      curr_s=0;
-    }
-    else{
-      curr_s=1;
     }
 
     //Need to destuff before storing
@@ -244,27 +237,27 @@ int llread(u_int8_t *buffer)
     {
       if (bcc2_is_not_okay) //BCC2 is wrong 
       {
-        //Send RR
-        if (curr_s == 0)
+        //Send RR - Slide 14
+        if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER);
+          send_cmd(3, TRANSMITTER); //RR(Nr=1)
         }
-        else
+        else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER);
+          send_cmd(4, TRANSMITTER);//RR(Nr=0)
         }
       }
       else
       {
         //Info duplicated but BCC2 right
         //Send RR & dump info
-        if (curr_s== 0)
+        if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER);
+          send_cmd(3, TRANSMITTER); //RR(Nr=1)
         }
-        else
+        else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER);
+          send_cmd(4, TRANSMITTER);//RR(Nr=0)
         }
       }
     }
@@ -273,27 +266,27 @@ int llread(u_int8_t *buffer)
       if (bcc2_is_not_okay)
       {
         //Send REJ
-        if (cmd==C_I_ZERO)
+        if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(5, TRANSMITTER);
+          send_cmd(5, TRANSMITTER); //REJ(Nr=1)
         }
-        else
-        {
-          send_cmd(6, TRANSMITTER);
+        else //I(Ns=1)
+        { 
+          send_cmd(6, TRANSMITTER); //REJ(Nr=0)
         }
       }
       else
       {
         //Send RR + store info
-        //Should change sequence number?
-        if (seqNum == 0)
+        //Change sequence number?
+        if (seqNum==0) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER);
+          send_cmd(3, TRANSMITTER); //RR(Nr=1)
           seqNum=1;
         }
-        else
+        else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER);
+          send_cmd(4, TRANSMITTER);//RR(Nr=0)
           seqNum=0;
         }
         return length;
