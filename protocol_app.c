@@ -28,6 +28,15 @@ int llopen(char *porta, int sender)
   u_int8_t cmd;
   int res = -1;
 
+  int fd = open(porta, O_RDWR | O_NOCTTY);
+    if (fd < 0)
+    {
+        perror(porta);
+        return -1;
+    }
+
+  app_info.fileDescriptor = fd;
+
   if (tcgetattr(app_info.fileDescriptor, &oldtio) == -1)
   {
     printf("ERROR\n");
