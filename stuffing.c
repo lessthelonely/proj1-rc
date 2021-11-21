@@ -9,17 +9,19 @@
 
 #include "../include/constants.h"
 
-/* Returns -1 if there's an error or size of the new frame
+/* 
+Returns size of the new frame
 */
 int stuffing(u_int8_t *buffer, int length)
 {
+    
     /*The new frame needs to have a different length than the og frame
 and by different I mean bigger, everytime it finds ESC or FLAG we need to replace it with FLAG and ESC (respectively)
 and add a ESC_FOUND and FLAG_FOUND (respectively)
     */
    int more=0;
    for(int i=0;i<length;i++){
-       if(buffer[i] ==  FLAG || buffer[i] == ESC){
+       if(buffer[i] ==  FLAG || buffer[i] == ESC){ //sees if it can find any Flags or ESCs inside of trama, if so this means one extra space because we have to add an ESC_FOUND or FLAG_FOUND
            more++;
        }
    }
@@ -57,9 +59,9 @@ and add a ESC_FOUND and FLAG_FOUND (respectively)
 }
 
 /* 
-In case there's an error return -1 otherwise size of the new/og frame?
+Returns size of the new frame
 */
-int destuffing(u_int8_t *buffer, int length) //inverse of stuffing
+int destuffing(u_int8_t *buffer, int length)
 {
     //With stuffing the frame goes back to its original size
     u_int8_t*frame = (u_int8_t *)malloc(sizeof(u_int8_t)*length);
