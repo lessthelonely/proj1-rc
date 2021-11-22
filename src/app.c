@@ -37,7 +37,7 @@ int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
 int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int8_t *package)
 {
     int size = 0;
-    package[0] = c; //need to be informed if it's supposed to be the start (2) or end (3)-->should I make constants?
+    package[0] = c; //need to be informed if it's supposed to be the start (2) or end (3)
     /*Going to have two sets of TLV:
     First one is about the size of the file
     Second about the name of the file

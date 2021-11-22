@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     int not_end = FALSE;
     while (!not_end)
     {
-        if ((size = llread(package)) < 0) //destuffing happens inside here
+        if ((size = llread(package)) < 0)
         {
             printf("ERROR\n");
             free(package);

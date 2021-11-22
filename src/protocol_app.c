@@ -15,6 +15,7 @@
 
 struct termios newtio, oldtio;
 
+
 /*Returns 0 or -1 in case of error*/
 int llopen()
 { //Don't need any of the arguments in the slides because all the data is stored in data structures 
@@ -122,7 +123,10 @@ TRANSMITTER is the only one who calls this function
 int llwrite(u_int8_t *buffer, int length)
 {
   static int seqNum = 0; //keeps track of sequence number
+  static int gotREJ=0;
   u_int8_t *trama = (u_int8_t *)malloc(MAX_FRAME_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
+  u_int8_t *copy = (u_int8_t *)malloc(MAX_FRAME_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
+
   if (length < 0)
   {
     printf("Value should be positive in order to actually transfer data\n");
@@ -131,12 +135,24 @@ int llwrite(u_int8_t *buffer, int length)
   }
   int write_length;
   u_int8_t cmd;
+  memcpy(copy,buffer,length);
   //Need to create info trauma + send it
   while (TRUE)
   { 
-    //We initilized trauma array with the biggest possible size (MAX_SIZE) 
-     memset(trama, 0, strlen(trama)); //initialize trama array
-     write_length = create_info_trama(buffer, trama, length,seqNum);
+    if(gotREJ){
+      memcpy(buffer,copy,length); 
+      memcpy(copy,buffer,length);
+    }
+    memset(trama, 0, strlen(trama)); //initialize trama array
+    write_length = create_info_trama(buffer, trama, length,seqNum); 
+    /*In create_info_trama, we use memcpy to extract the info in buffer and put it in trama
+      The memcpy function makes it so that the buffer array gets empty after its execution so when we return to 
+      llread, buffer is completely empty, this would be fine if we only had to do one iteration of this function,
+      however if receiver sends out a REJ as an ACK we will have to retransmit info (do this cycle again) until 
+      it sends out a RR. So if buffer is empty we can't resend the information, a percentage of the file we want
+      to transfer will be lost. To avoid this we make a new array (copy) and we copy the buffer's info to it before
+      the cycle starts so the it stays safe, before we call create_info_trama, in case it's not the first iteration 
+      (verified by int gotREJ) we copy the info in copy to buffer and vice-versa (for the future)  */
  
     alarm(link_info.timeout);
     if (write(app_info.fileDescriptor, trama, write_length) < 0)
@@ -168,6 +184,7 @@ int llwrite(u_int8_t *buffer, int length)
         seqNum=0;
       }
       free(trama);
+      gotREJ=0;
       return write_length;
     }
 
@@ -175,6 +192,7 @@ int llwrite(u_int8_t *buffer, int length)
     {
       deactivate_alarm();
       printf("Received REJ\n");//Need to retransmit message
+      gotREJ = 1;
     }
   }
 }
@@ -258,6 +276,7 @@ int llread(u_int8_t *buffer)
         { 
           send_cmd(6, TRANSMITTER); //REJ(Nr=0)
         }
+        continue;
       }
       else
       {
