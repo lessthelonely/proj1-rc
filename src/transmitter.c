@@ -19,9 +19,8 @@ int main(int argc, char **argv)
 {
     u_int8_t *package[MAX_FRAME_SIZE]; //it should be bigger than 255 because K=256*L2+L1
     app_info.status = TRANSMITTER;
-    int index=0;
+    int index_t=-1,index_n=-1,index_f=-1;
     FILE *fprt;
-    link_info.baudRate=-1;
 
     //Parse arguments
     for (int i = 1; i < argc; i++)
@@ -32,14 +31,17 @@ int main(int argc, char **argv)
             {
                 strcpy(link_info.port, argv[i]);
             }
+
             if (!strcmp(argv[i], "-t"))
             {
                 link_info.timeout = atoi(argv[i + 1]);
+                index_t = i+1;
             }
 
             if (!strcmp(argv[i], "-n"))
             {
                 link_info.numTransmissions = atoi(argv[i + 1]);
+                index_n = i+1;
             }
 
             if (!strcmp(argv[i], "-b"))
@@ -49,13 +51,24 @@ int main(int argc, char **argv)
 
             if (!strcmp(argv[i], "-f"))
             {
-                index=i+1;
+                index_f=i+1;
             }
         }
     }
 
-    u_int8_t * filename= argv[index];
+    if(index_f < 0){
+        printf("ERROR: Please introduce a file so we can start the transmission process\n");
+    }
+    u_int8_t * filename= argv[index_f];
+    
+    if(index_n < 0){
+        link_info.numTransmissions = 3; //default value
+    }
 
+    if(index_t < 0){
+        link_info.timeout = 3; //default value
+    }
+    
     struct stat st;
     stat(filename, &st);
     int size = st.st_size; //get file's size

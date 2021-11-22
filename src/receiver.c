@@ -127,7 +127,8 @@ int main(int argc, char **argv)
                 return 1;
             }
             not_end = TRUE;
-
+ 
+            //If everything went well with the transmission, the size of the og file and the new one will be the same
             if(strcmp(end, filename) != 0){
                 printf("ERROR\n");
             }
