@@ -211,6 +211,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 int llread(u_int8_t *buffer)
 {
   static int seqNum=0; //keeps track of the sequence Number
+  static int counter=0;
   int length;
   u_int8_t cmd;
 
@@ -249,6 +250,14 @@ int llread(u_int8_t *buffer)
       printf("Wrong BCC2 - gonna send negative ACK (REJ)\n");
       bcc2_is_not_okay = TRUE;
     }
+
+    if(!bcc2_is_not_okay){
+      if(counter % 2==0){
+        bcc2_is_not_okay = TRUE;
+        printf("Wrong BCC2 - gonna send negative ACK (REJ)\n");
+      }
+    }
+    counter++;
 
     //Info is duplicated
     if ((cmd == C_I_ZERO && seqNum == 1) || (cmd == C_I_ONE && seqNum == 0))
