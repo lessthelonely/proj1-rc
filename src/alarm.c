@@ -6,6 +6,7 @@
 #include "app.h"
 #include "constants.h"
 
+
 int flag = 1, conta = 0;
 
 void atende() // atende alarme
@@ -17,7 +18,8 @@ void atende() // atende alarme
    if (conta > link_info.numTransmissions)
    {
       printf("Number of transmission tries exceed");
-      return -1;
+      close(app_info.fileDescriptor);
+      exit(-1);
    }
 }
 

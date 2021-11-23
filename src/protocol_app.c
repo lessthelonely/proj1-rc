@@ -210,7 +210,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 */
 int llread(u_int8_t *buffer)
 {
-  static int seqNum=0; //keeps track of the sequence Number
+   static int seqNum=0; //keeps track of the sequence Number
   int length;
   u_int8_t cmd;
 

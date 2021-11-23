@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+
 #include "app.h"
 #include "protocol_app.h"
 #include "constants.h"
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
 
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
+
     llopen(); 
 
     int size;
@@ -152,6 +154,7 @@ int main(int argc, char **argv)
         free(frame);
         return 1;
     }
+
     free(package);
     free(frame);
     free(filename);

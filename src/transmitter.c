@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     }
 
     if(index_t < 0){
-        link_info.timeout = 3; //default value
+        link_info.timeout = 3; //default 
     }
     
     struct stat st;
