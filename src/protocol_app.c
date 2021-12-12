@@ -373,12 +373,6 @@ int llclose() //Don't need any of the arguments in the slides because all the da
   }
 
   //close fd
-  sleep(1);
-  if (tcsetattr(app_info.fileDescriptor, TCSANOW, &oldtio) == -1)
-  {
-    perror("tcsetattr");
-    return -1;
-  }
   close(app_info.fileDescriptor);
   return 0;
 }
