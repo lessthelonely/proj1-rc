@@ -14,9 +14,9 @@
 
 struct termios newtio, oldtio;
 
-int llopen(int status)
+int llopen()
 { //Don't need any of the arguments in the slides because all the data is stored in data structures 
-  if (status != TRANSMITTER && status != RECEIVER)
+  if (link_info.status != TRANSMITTER && link_info.status != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR");
     return -1;
@@ -26,6 +26,7 @@ int llopen(int status)
   int res = -1;
 
   int fd = open(link_info.port, O_RDWR | O_NOCTTY);
+  link_info.fileDescriptor=fd;
     if (fd < 0)
     {
         perror(link_info.port);
@@ -63,7 +64,7 @@ int llopen(int status)
     return -1;
   }
 
-  if (status == TRANSMITTER)
+  if (link_info.status == TRANSMITTER)
   {
     while (res != 0)
     {
@@ -108,7 +109,7 @@ int llopen(int status)
   return fd;
 }
 
-int llwrite(u_int8_t *buffer, int length, int fd)
+int llwrite(u_int8_t *buffer, int length)
 {
   
 /*Orders protocol to send the Info trauma
@@ -148,7 +149,7 @@ TRANSMITTER is the only one who calls this function
       (verified by int gotREJ) we copy the info in copy to buffer and vice-versa (for the future)  */
  
     alarm(link_info.timeout);
-    if (write(fd, trama, write_length) < 0)
+    if (write(link_info.fileDescriptor, trama, write_length) < 0)
     {
       printf("ERROR");
     }
@@ -157,7 +158,7 @@ TRANSMITTER is the only one who calls this function
       printf("Sent message with sequence number %d\n", seqNum);
     }
 
-    if (read_cmd(&cmd, fd) < 0)
+    if (read_cmd(&cmd, link_info.fileDescriptor) < 0)
     {
       printf("ERROR");
     }
@@ -200,7 +201,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 }
 
 
-int llread(u_int8_t *buffer, int fd)
+int llread(u_int8_t *buffer)
 {
    /* RECEIVER is the only one who calls this function
   */
@@ -212,7 +213,7 @@ int llread(u_int8_t *buffer, int fd)
   {
     //read info trama-->can't use read_cmd because of the data segment
     
-    if ((length = read_info_trama(buffer,&cmd, fd)) < 0)
+    if ((length = read_info_trama(buffer,&cmd, link_info.fileDescriptor)) < 0)
     {
     }
     else
@@ -293,26 +294,26 @@ int llread(u_int8_t *buffer, int fd)
   return -1;
 }
 
-int llclose(int status, int fd) //Don't need any of the arguments in the slides because all the data is stored in data structures 
+int llclose() //Don't need any of the arguments in the slides because all the data is stored in data structures 
 {
   int cmd_received = FALSE;
   u_int8_t cmd;
-  if (status!= TRANSMITTER && status != RECEIVER)
+  if (link_info.status!= TRANSMITTER && link_info.status != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR\n");
   }
 
-  if (status == TRANSMITTER)
+  if (link_info.status == TRANSMITTER)
   {
     while (!cmd_received)
     {
       alarm(link_info.timeout);
-      if (send_cmd(1, TRANSMITTER, fd) < 0) //Send DISC
+      if (send_cmd(1, TRANSMITTER, link_info.fileDescriptor) < 0) //Send DISC
       {
         printf("ERROR\n");
       }
 
-      if (read_cmd(&cmd, fd) < 0) //Read DISC from Receiver
+      if (read_cmd(&cmd, link_info.fileDescriptor) < 0) //Read DISC from Receiver
       {
         printf("Try again\n");
       }
@@ -322,7 +323,7 @@ int llclose(int status, int fd) //Don't need any of the arguments in the slides 
         cmd_received = TRUE;
       }
 
-      if (send_cmd(2, TRANSMITTER, fd) < 0) //Send UA
+      if (send_cmd(2, TRANSMITTER, link_info.fileDescriptor) < 0) //Send UA
       {
         printf("ERROR\n");
       }
@@ -332,7 +333,7 @@ int llclose(int status, int fd) //Don't need any of the arguments in the slides 
   {
     while (!cmd_received)
     {
-      if (read_cmd(&cmd, fd) < 0) //Read DISC
+      if (read_cmd(&cmd, link_info.fileDescriptor) < 0) //Read DISC
       {
         printf("ERROR\n");
         continue;
@@ -345,13 +346,13 @@ int llclose(int status, int fd) //Don't need any of the arguments in the slides 
         }
       }
 
-      if (send_cmd(1, TRANSMITTER, fd) < 0) //Send DISC back
+      if (send_cmd(1, TRANSMITTER, link_info.fileDescriptor) < 0) //Send DISC back
       {
         printf("ERROR\n");
         continue;
       }
 
-      if (read_cmd(&cmd, fd) < 0) //Read UA
+      if (read_cmd(&cmd, link_info.fileDescriptor) < 0) //Read UA
       {
         printf("ERROR\n");
         continue;
@@ -367,7 +368,7 @@ int llclose(int status, int fd) //Don't need any of the arguments in the slides 
   }
 
   //close fd
-  close(fd);
+  close(link_info.fileDescriptor);
   return 0;
 }
 
