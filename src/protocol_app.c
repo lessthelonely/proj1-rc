@@ -251,11 +251,11 @@ int llread(u_int8_t *buffer)
        //Send RR - Slide 14
         if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER, fd); //RR(Nr=1)
+          send_cmd(3, TRANSMITTER, link_info.fileDescriptor); //RR(Nr=1)
         }
         else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER, fd);//RR(Nr=0)
+          send_cmd(4, TRANSMITTER, link_info.fileDescriptor);//RR(Nr=0)
         }
       }
     else
@@ -265,11 +265,11 @@ int llread(u_int8_t *buffer)
         //Send REJ
         if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(5, TRANSMITTER, fd); //REJ(Nr=1)
+          send_cmd(5, TRANSMITTER, link_info.fileDescriptor); //REJ(Nr=1)
         }
         else //I(Ns=1)
         { 
-          send_cmd(6, TRANSMITTER, fd); //REJ(Nr=0)
+          send_cmd(6, TRANSMITTER, link_info.fileDescriptor); //REJ(Nr=0)
         }
         continue;
       }
@@ -279,12 +279,12 @@ int llread(u_int8_t *buffer)
         //Change sequence number
         if (seqNum==0) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER, fd); //RR(Nr=1)
+          send_cmd(3, TRANSMITTER, link_info.fileDescriptor); //RR(Nr=1)
           seqNum=1;
         }
         else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER, fd);//RR(Nr=0)
+          send_cmd(4, TRANSMITTER, link_info.fileDescriptor);//RR(Nr=0)
           seqNum=0;
         }
         return length;
