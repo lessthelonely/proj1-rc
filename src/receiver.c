@@ -33,7 +33,6 @@ int main(int argc, char **argv)
         {
             if (!strncmp(argv[i], "/dev/ttyS", 9))
             {
-
                 strcpy(link_info.port, argv[i]);
             }
 
@@ -47,6 +46,15 @@ int main(int argc, char **argv)
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
 
+    if(index==-1){
+         printf("ERROR: Please try again and input a name for the new file so we can start the transmission process\n");
+         return 1; 
+    }
+    else{
+        new_file=argv[index];
+    }
+    
+    
     llopen();
 
     int size;
@@ -74,16 +82,8 @@ int main(int argc, char **argv)
             received_ctrl_pack_start = TRUE;
         }
     }
-
-    if(index==-1){
-        new_file=filename;
-    }
-    else{
-        new_file=argv[index];
-    }
-
-    
-    if ((fptr = fopen(new_file, "w")) == NULL)
+  
+     if ((fptr = fopen(new_file, "w")) == NULL)
     {
         printf("ERROR\n");
         free(package);
@@ -130,11 +130,7 @@ int main(int argc, char **argv)
             }
             not_end = TRUE;
  
-            //If everything went well with the transmission, the size of the og file and the new one will be the same
-            if(strcmp(end, filename) != 0){
-                printf("ERROR\n");
-            }
-
+            //If everything went well with the transmission (no data lost), the size of the og file and the new one will be the same
             if(file_size != end_fsize){
                 printf("ERROR\n");
             }
@@ -158,6 +154,5 @@ int main(int argc, char **argv)
     free(package);
     free(frame);
     free(filename);
-   return 0;
+    return 0;
 }
-
