@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "app.h"
+#include "protocol_app.h"
 #include "constants.h"
 
 
@@ -18,7 +18,7 @@ void atende() // atende alarme
    if (conta > link_info.numTransmissions)
    {
       printf("Number of transmission tries exceed");
-      close(app_info.fileDescriptor);
+      close(link_info.fileDescriptor);
       exit(-1);
    }
 }
