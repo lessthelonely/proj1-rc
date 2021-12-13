@@ -26,12 +26,12 @@ int llopen()
   int res = -1;
 
   int fd = open(link_info.port, O_RDWR | O_NOCTTY);
-  link_info.fileDescriptor=fd;
     if (fd < 0)
     {
         perror(link_info.port);
         return -1;
     }
+  link_info.fileDescriptor=fd;
 
   if (tcgetattr(fd, &oldtio) == -1)
   {
@@ -120,7 +120,7 @@ TRANSMITTER is the only one who calls this function
 */
   
   static int seqNum = 0; //keeps track of sequence number
-  static int repeat=0;
+  static int retransmit=0;
   u_int8_t *trama = (u_int8_t *)malloc(MAX_FRAME_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
   u_int8_t *copy = (u_int8_t *)malloc(MAX_FRAME_SIZE * sizeof(u_int8_t)); //Allocs space to write info trama
 
@@ -136,18 +136,14 @@ TRANSMITTER is the only one who calls this function
   //Need to create info trauma + send it
   while (TRUE)
   { 
-    if(repeat){
+    if(retransmit){  //ensure we have information for potential retransmissions
       memcpy(buffer,copy,length); 
       memcpy(copy,buffer,length);
     }
     memset(trama, 0, strlen(trama)); //initialize trama array
     write_length = create_info_trama(buffer, trama, length,seqNum); 
-    /*In create_info_trama, we use memcpy to extract the info in buffer and put it in trama.
-      To make sure we have information to resend (in case receiver sends out a REJ as an ACK), 
-      we make a new array (copy) and we copy the buffer's info to it before the cycle starts so 
-      that it stays safe, before we call create_info_trama, in case it's not the first iteration 
-      (verified by int gotREJ) we copy the info in copy to buffer and vice-versa (for the future)  */
- 
+    
+    
     alarm(link_info.timeout);
     if (write(link_info.fileDescriptor, trama, write_length) < 0)
     {
@@ -178,17 +174,19 @@ TRANSMITTER is the only one who calls this function
         seqNum=0;
       }
       free(trama);
-      repeat=0;
+      retransmit=0;
       return write_length;
     }
 
-    if (cmd == C_REJ_ZERO || cmd == C_REJ_ONE)
+    else if (cmd == C_REJ_ZERO || cmd == C_REJ_ONE)
     {
       deactivate_alarm();
       printf("Received REJ\n");//Need to retransmit message
-      repeat = 1;
+       retransmit = 1;
     }
-    repeat = 1; //We didn't receive any ACK from the receiver so we are gonna resend information x times
+    else{
+      retransmit=1;
+    }
   }
 }
 
@@ -345,6 +343,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
           cmd_received = TRUE;
         }
       }
+    }
 
       if (send_cmd(1, TRANSMITTER, link_info.fileDescriptor) < 0) //Send DISC back
       {
@@ -355,19 +354,16 @@ int llclose() //Don't need any of the arguments in the slides because all the da
       if (read_cmd(&cmd, link_info.fileDescriptor) < 0) //Read UA
       {
         printf("ERROR\n");
-        continue;
       }
-      else
-      {
-        if (cmd == C_UA)
-        {
-          cmd_received = TRUE;
-        }
-      }
-    }
+     
   }
 
   //close fd
+  if (tcsetattr(link_info.fileDescriptor, TCSANOW, &oldtio) == -1)
+  {
+    perror("tcsetattr");
+    return -1;
+  }
   close(link_info.fileDescriptor);
   return 0;
 }
