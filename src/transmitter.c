@@ -18,7 +18,7 @@
 int main(int argc, char **argv)
 {
     u_int8_t *package[MAX_FRAME_SIZE]; //it should be bigger than 255 because K=256*L2+L1
-    app_info.status = TRANSMITTER;
+    link_info.status = TRANSMITTER;
     int index_t=-1,index_n=-1,index_f=-1;
     FILE *fprt;
 
@@ -83,8 +83,7 @@ int main(int argc, char **argv)
     install_alarm();
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    int fd= llopen(TRANSMITTER);
-    app_info.fileDescriptor = fd;
+    llopen();
 
     //Send control package with START
     int package_size;
@@ -95,7 +94,7 @@ int main(int argc, char **argv)
     }
 
     int write_length;
-    if ((write_length = llwrite(package, package_size, fd)) < 0)
+    if ((write_length = llwrite(package, package_size)) < 0)
     {
         printf("ERROR\n");
         return 1;
@@ -125,7 +124,7 @@ int main(int argc, char **argv)
         }
 
         int frame_size = line_size + 4; //4 because line_size only has the size of P1...Pk, we need it to have C, N, L2 and L1 into consideration
-        if (llwrite(frame, frame_size, fd) < 0)
+        if (llwrite(frame, frame_size) < 0)
         {
             printf("ERROR\n");
             return 1;
@@ -147,7 +146,7 @@ int main(int argc, char **argv)
     }
 
     //Close connection
-    if (llclose(TRANSMITTER, fd) < 0)
+    if (llclose() < 0)
     {
         printf("ERROR\n");
         return 1;
