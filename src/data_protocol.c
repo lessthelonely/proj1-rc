@@ -12,10 +12,9 @@
 #include "app.h"
 #include "alarm.h"
 
-
-/*Function to use for every cmd except when it's an info trama*/
 int send_cmd(int command, int sender)
 { 
+/*Function to use for every cmd except when it's an info trama*/
   u_int8_t cmd[5];
   if (sender == TRANSMITTER)
   { //Emitter
@@ -82,9 +81,6 @@ int send_cmd(int command, int sender)
   return res;
 }
 
-/*
-Returns -1 in case of error or length of the trama written
-*/
 int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd)
 {
   int r=-1;
