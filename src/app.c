@@ -10,18 +10,15 @@
 #include "app.h"
 #include "constants.h"
 
-/*We are gonna ask the user for stuff to fill out the struct linkLayer 
-Need to make two packets: control and data
-Control packets have two types: 1) symbolizes transmission start
-                                2) symbolizes transmission end
-Contents of each packet->slide 23
-Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, probs
-*/
-
-/* Return -1 if error, 0 otherwise
-*/
 int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
 {
+    /*We are gonna ask the user for stuff to fill out the struct linkLayer 
+    Need to make two packets: control and data
+    Control packets have two types: 1) symbolizes transmission start
+                                    2) symbolizes transmission end
+    Contents of each packet->slide 23
+    Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, probs
+    */
     package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
     package[1] = n % 255;  
     package[2] = length / 256; //L2
