@@ -44,11 +44,6 @@ int main(int argc, char **argv)
                 index_n = i+1;
             }
 
-            if (!strcmp(argv[i], "-b"))
-            {
-                link_info.baudRate = atoi(argv[i + 1]);
-            }
-
             if (!strcmp(argv[i], "-f"))
             {
                 index_f=i+1;
@@ -58,6 +53,7 @@ int main(int argc, char **argv)
 
     if(index_f < 0){
         printf("ERROR: Please introduce a file so we can start the transmission process\n");
+        return 1;
     }
     u_int8_t * filename= argv[index_f];
     
