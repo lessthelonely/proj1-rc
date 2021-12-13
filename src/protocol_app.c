@@ -9,16 +9,14 @@
 #include "constants.h"
 #include "data_protocol.h"
 #include "stuffing.h"
-#include "app.h"
 #include "protocol_app.h"
 #include "alarm.h"
 
 struct termios newtio, oldtio;
 
-
-int llopen()
+int llopen(int status)
 { //Don't need any of the arguments in the slides because all the data is stored in data structures 
-  if (app_info.status != TRANSMITTER && app_info.status != RECEIVER)
+  if (status != TRANSMITTER && status != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR");
     return -1;
@@ -34,9 +32,7 @@ int llopen()
         return -1;
     }
 
-  app_info.fileDescriptor = fd;
-
-  if (tcgetattr(app_info.fileDescriptor, &oldtio) == -1)
+  if (tcgetattr(fd, &oldtio) == -1)
   {
     printf("ERROR\n");
     return -1;
@@ -59,20 +55,20 @@ int llopen()
   newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
   newtio.c_cc[VMIN] = 1;  /* blocking read until 1 chars received */
 
-  tcflush(app_info.fileDescriptor, TCIOFLUSH);
+  tcflush(fd, TCIOFLUSH);
 
-  if (tcsetattr(app_info.fileDescriptor, TCSANOW, &newtio) == -1)
+  if (tcsetattr(fd, TCSANOW, &newtio) == -1)
   {
     printf("ERROR\n");
     return -1;
   }
 
-  if (app_info.status == TRANSMITTER)
+  if (status == TRANSMITTER)
   {
     while (res != 0)
     {
       alarm(link_info.timeout);
-      if (send_cmd(0, TRANSMITTER) < 0)
+      if (send_cmd(0, TRANSMITTER, fd) < 0)
       { //Send SET
         printf("ERROR\n");
       }
@@ -81,7 +77,7 @@ int llopen()
         printf("Wrote SET\n");
       }
 
-      if ((res = read_cmd(&cmd)) >= 0){
+      if ((res = read_cmd(&cmd, fd)) >= 0){
         printf("Received UA\n");
       }
     }
@@ -96,10 +92,10 @@ int llopen()
   {
     while (res < 0)
     {
-      read_cmd(&cmd);
+      read_cmd(&cmd, fd);
       printf("Read SET\n");
 
-      if ((res = send_cmd(2, TRANSMITTER)) < 0)
+      if ((res = send_cmd(2, TRANSMITTER, fd)) < 0)
       {
         printf("ERROR\n");
       }
@@ -109,10 +105,10 @@ int llopen()
       }
     }
   }
-  return 0;
+  return fd;
 }
 
-int llwrite(u_int8_t *buffer, int length)
+int llwrite(u_int8_t *buffer, int length, int fd)
 {
   
 /*Orders protocol to send the Info trauma
@@ -152,7 +148,7 @@ TRANSMITTER is the only one who calls this function
       (verified by int gotREJ) we copy the info in copy to buffer and vice-versa (for the future)  */
  
     alarm(link_info.timeout);
-    if (write(app_info.fileDescriptor, trama, write_length) < 0)
+    if (write(fd, trama, write_length) < 0)
     {
       printf("ERROR");
     }
@@ -161,7 +157,7 @@ TRANSMITTER is the only one who calls this function
       printf("Sent message with sequence number %d\n", seqNum);
     }
 
-    if (read_cmd(&cmd) < 0)
+    if (read_cmd(&cmd, fd) < 0)
     {
       printf("ERROR");
     }
@@ -204,7 +200,7 @@ void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
 }
 
 
-int llread(u_int8_t *buffer)
+int llread(u_int8_t *buffer, int fd)
 {
    /* RECEIVER is the only one who calls this function
   */
@@ -216,7 +212,7 @@ int llread(u_int8_t *buffer)
   {
     //read info trama-->can't use read_cmd because of the data segment
     
-    if ((length = read_info_trama(buffer,&cmd)) < 0)
+    if ((length = read_info_trama(buffer,&cmd, fd)) < 0)
     {
     }
     else
@@ -254,11 +250,11 @@ int llread(u_int8_t *buffer)
        //Send RR - Slide 14
         if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER); //RR(Nr=1)
+          send_cmd(3, TRANSMITTER, fd); //RR(Nr=1)
         }
         else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER);//RR(Nr=0)
+          send_cmd(4, TRANSMITTER, fd);//RR(Nr=0)
         }
       }
     else
@@ -268,11 +264,11 @@ int llread(u_int8_t *buffer)
         //Send REJ
         if (cmd==C_I_ZERO) //I(Ns=0)
         {
-          send_cmd(5, TRANSMITTER); //REJ(Nr=1)
+          send_cmd(5, TRANSMITTER, fd); //REJ(Nr=1)
         }
         else //I(Ns=1)
         { 
-          send_cmd(6, TRANSMITTER); //REJ(Nr=0)
+          send_cmd(6, TRANSMITTER, fd); //REJ(Nr=0)
         }
         continue;
       }
@@ -282,12 +278,12 @@ int llread(u_int8_t *buffer)
         //Change sequence number
         if (seqNum==0) //I(Ns=0)
         {
-          send_cmd(3, TRANSMITTER); //RR(Nr=1)
+          send_cmd(3, TRANSMITTER, fd); //RR(Nr=1)
           seqNum=1;
         }
         else //I(Ns=1)
         {
-          send_cmd(4, TRANSMITTER);//RR(Nr=0)
+          send_cmd(4, TRANSMITTER, fd);//RR(Nr=0)
           seqNum=0;
         }
         return length;
@@ -297,26 +293,26 @@ int llread(u_int8_t *buffer)
   return -1;
 }
 
-int llclose() //Don't need any of the arguments in the slides because all the data is stored in data structures 
+int llclose(int status, int fd) //Don't need any of the arguments in the slides because all the data is stored in data structures 
 {
   int cmd_received = FALSE;
   u_int8_t cmd;
-  if (app_info.status!= TRANSMITTER && app_info.status != RECEIVER)
+  if (status!= TRANSMITTER && status != RECEIVER)
   { //sender will be TRANSMITTER or RECEIVER
     printf("ERROR\n");
   }
 
-  if (app_info.status == TRANSMITTER)
+  if (status == TRANSMITTER)
   {
     while (!cmd_received)
     {
       alarm(link_info.timeout);
-      if (send_cmd(1, TRANSMITTER) < 0) //Send DISC
+      if (send_cmd(1, TRANSMITTER, fd) < 0) //Send DISC
       {
         printf("ERROR\n");
       }
 
-      if (read_cmd(&cmd) < 0) //Read DISC from Receiver
+      if (read_cmd(&cmd, fd) < 0) //Read DISC from Receiver
       {
         printf("Try again\n");
       }
@@ -326,7 +322,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
         cmd_received = TRUE;
       }
 
-      if (send_cmd(2, TRANSMITTER) < 0) //Send UA
+      if (send_cmd(2, TRANSMITTER, fd) < 0) //Send UA
       {
         printf("ERROR\n");
       }
@@ -336,7 +332,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
   {
     while (!cmd_received)
     {
-      if (read_cmd(&cmd) < 0) //Read DISC
+      if (read_cmd(&cmd, fd) < 0) //Read DISC
       {
         printf("ERROR\n");
         continue;
@@ -349,13 +345,13 @@ int llclose() //Don't need any of the arguments in the slides because all the da
         }
       }
 
-      if (send_cmd(1, TRANSMITTER) < 0) //Send DISC back
+      if (send_cmd(1, TRANSMITTER, fd) < 0) //Send DISC back
       {
         printf("ERROR\n");
         continue;
       }
 
-      if (read_cmd(&cmd) < 0) //Read UA
+      if (read_cmd(&cmd, fd) < 0) //Read UA
       {
         printf("ERROR\n");
         continue;
@@ -371,7 +367,7 @@ int llclose() //Don't need any of the arguments in the slides because all the da
   }
 
   //close fd
-  close(app_info.fileDescriptor);
+  close(fd);
   return 0;
 }
 
