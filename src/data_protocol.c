@@ -9,10 +9,9 @@
 
 #include "data_protocol.h"
 #include "constants.h"
-#include "app.h"
 #include "alarm.h"
 
-int send_cmd(int command, int sender)
+int send_cmd(int command, int sender, int fd)
 { 
 /*Function to use for every cmd except when it's an info trama*/
   u_int8_t cmd[5];
@@ -73,7 +72,7 @@ int send_cmd(int command, int sender)
   }
 
   printf("I'M SENDING THIS COMMAND: %02x | %02x | %02x | %02x | %02x \n", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
-  int res = write(app_info.fileDescriptor, cmd, 5);
+  int res = write(fd, cmd, 5);
   if (res == -1)
   {
     printf("ERROR IN SENDING.\n");
@@ -81,7 +80,7 @@ int send_cmd(int command, int sender)
   return res;
 }
 
-int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd)
+int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd, int fd)
 {
   int r=-1;
   u_int8_t byte_received;
@@ -91,7 +90,7 @@ int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd)
 
   while (TRUE)
   {
-    if (read(app_info.fileDescriptor, &byte_received, 1) < 0)
+    if (read(fd, &byte_received, 1) < 0)
     {
       printf("ERROR\n");
       return -1;
@@ -181,7 +180,7 @@ int read_info_trama(u_int8_t *info_trama, u_int8_t *cmd)
   return -1;
 }
 
-int read_cmd(u_int8_t*cmd)
+int read_cmd(u_int8_t*cmd, int fd)
 {
   u_int8_t byte_received;
   messageState state = START;
@@ -191,7 +190,7 @@ int read_cmd(u_int8_t*cmd)
   while (TRUE)
   {
 
-    if (read(app_info.fileDescriptor, &byte_received, 1) < 0){
+    if (read(fd, &byte_received, 1) < 0){
       return -1;
     }
 
