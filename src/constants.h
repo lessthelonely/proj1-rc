@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define BAUDRATE B38400
+#define BAUDRATE B38400 
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -50,9 +50,15 @@
 #define FLAG_FOUND 0x5E    //FLAG ^ 0x20
 #define ESC_FOUND 0x5D  //ESC ^ 0x20
 
+/*
+Values for the variable status from the applicationLayer struct
+*/
 #define TRANSMITTER 0
 #define RECEIVER 1
 
+/*
+Values for control byte (application' control and data packages)
+*/
 #define CTRL_DATA 1
 #define CTRL_START 2
 #define CTRL_END 3
