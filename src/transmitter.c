@@ -13,7 +13,7 @@
 #include "protocol_app.h"
 #include "alarm.h"
 
-// ./transmitter /dev/ttySx -t TIMEOUT -n numTries -b BAUDRATE -f filename
+// ./transmitter /dev/ttySx -t TIMEOUT -n numTries -f filename
 
 int main(int argc, char **argv)
 {
@@ -83,7 +83,8 @@ int main(int argc, char **argv)
     install_alarm();
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
-    llopen();
+    int fd= llopen(TRANSMITTER);
+    app_info.fileDescriptor = fd;
 
     //Send control package with START
     int package_size;
@@ -94,7 +95,7 @@ int main(int argc, char **argv)
     }
 
     int write_length;
-    if ((write_length = llwrite(package, package_size)) < 0)
+    if ((write_length = llwrite(package, package_size, fd)) < 0)
     {
         printf("ERROR\n");
         return 1;
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
         }
 
         int frame_size = line_size + 4; //4 because line_size only has the size of P1...Pk, we need it to have C, N, L2 and L1 into consideration
-        if (llwrite(frame, frame_size) < 0)
+        if (llwrite(frame, frame_size, fd) < 0)
         {
             printf("ERROR\n");
             return 1;
@@ -139,14 +140,14 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    if ((write_length = llwrite(package, package_size)) < 0)
+    if ((write_length = llwrite(package, package_size, fd)) < 0)
     {
         printf("ERROR\n");
         return 1;
     }
 
     //Close connection
-    if (llclose() < 0)
+    if (llclose(TRANSMITTER, fd) < 0)
     {
         printf("ERROR\n");
         return 1;
