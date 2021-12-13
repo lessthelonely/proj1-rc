@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 {
     u_int8_t *package = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
     u_int8_t *frame = (u_int8_t *)malloc(sizeof(u_int8_t) * MAX_FRAME_SIZE);
-    app_info.status = RECEIVER;
+    link_info.status = RECEIVER;
     char *filename = (char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
     char *new_file = (char*)malloc(sizeof(char)*MAX_FRAME_SIZE);
     int file_size;
@@ -47,15 +47,14 @@ int main(int argc, char **argv)
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
 
-    int fd= llopen(RECEIVER);
-    app_info.fileDescriptor = fd;
+    llopen();
 
     int size;
     int received_ctrl_pack_start = FALSE;
     //Gonna receive a Control Package with START
     while (!received_ctrl_pack_start)
     {
-        if ((size = llread(package, fd)) < 0)
+        if ((size = llread(package)) < 0)
         {
             printf("ERROR\n");
             free(package);
@@ -96,7 +95,7 @@ int main(int argc, char **argv)
     int not_end = FALSE;
     while (!not_end)
     {
-        if ((size = llread(package, fd)) < 0)
+        if ((size = llread(package)) < 0)
         {
             printf("ERROR\n");
             free(package);
@@ -148,7 +147,7 @@ int main(int argc, char **argv)
     }
 
     //Close connection
-    if (llclose(RECEIVER, fd) < 0)
+    if (llclose() < 0)
     {
         printf("ERROR\n");
         free(package);
