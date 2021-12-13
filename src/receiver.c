@@ -13,7 +13,7 @@
 #include "protocol_app.h"
 #include "constants.h"
 
-// ./receiver /dev/ttySx (-f file name)
+// ./receiver /dev/ttySx -f file name
 
 int main(int argc, char **argv)
 {
@@ -47,14 +47,15 @@ int main(int argc, char **argv)
     //Open connection between app and data protocol
     //And connection between TRANSMITTER and RECEIVER
 
-    llopen(); 
+    int fd= llopen(RECEIVER);
+    app_info.fileDescriptor = fd;
 
     int size;
     int received_ctrl_pack_start = FALSE;
     //Gonna receive a Control Package with START
     while (!received_ctrl_pack_start)
     {
-        if ((size = llread(package)) < 0)
+        if ((size = llread(package, fd)) < 0)
         {
             printf("ERROR\n");
             free(package);
@@ -95,7 +96,7 @@ int main(int argc, char **argv)
     int not_end = FALSE;
     while (!not_end)
     {
-        if ((size = llread(package)) < 0)
+        if ((size = llread(package, fd)) < 0)
         {
             printf("ERROR\n");
             free(package);
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
     }
 
     //Close connection
-    if (llclose() < 0)
+    if (llclose(RECEIVER, fd) < 0)
     {
         printf("ERROR\n");
         free(package);
