@@ -9,9 +9,6 @@
 
 #include "constants.h"
 
-/* 
-Returns size of the new frame
-*/
 int stuffing(u_int8_t *buffer, int length)
 {
     
@@ -58,9 +55,6 @@ and add a ESC_FOUND and FLAG_FOUND (respectively)
     return nl;
 }
 
-/* 
-Returns size of the new frame
-*/
 int destuffing(u_int8_t *buffer, int length)
 {
     //With stuffing the frame goes back to its original size
