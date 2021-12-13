@@ -17,7 +17,7 @@
 #define BIT(n) 1 << n
 #define MAX_SIZE 255
 #define MAX_FRAME_SIZE 1500
-#define LINE_SIZE 300  
+#define LINE_SIZE 300 //Higher than 255
 
 #define FLAG 0x7E
 
