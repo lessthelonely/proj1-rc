@@ -139,7 +139,7 @@ int main(int argc, char **argv)
         printf("ERROR\n");
         return 1;
     }
-    if ((write_length = llwrite(package, package_size, fd)) < 0)
+    if ((write_length = llwrite(package, package_size)) < 0)
     {
         printf("ERROR\n");
         return 1;
