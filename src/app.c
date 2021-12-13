@@ -70,10 +70,18 @@ int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int
 int read_data_package(u_int8_t *data, u_int8_t *package)
 {
     /*Okay package[0] doesn't matter here, will matter where we call it tho
-    should we change the sequence number to whatever sequence number is in package[1]?
     package[2] & [3] are gonna be used to know the size of the info
-    Rest of the package is gonna be copied into char*data because data
-*/
+    Rest of the package is gonna be copied into u_int8_t*data because data
+    */
+    
+    /*app_info.sequenceNumber is where we store the sequence number we are expecting (packet wise).
+    This value is initially 0, thus the first package we expect has got to have 0 as a sequence number.
+    This is what's expected because we still haven't gotten that package. If we get it, we then update 
+    the value of app_info.sequenceNumber for future runs of read_data_package().
+    If we receive a value that is lower than the one in app_info.sequenceNumber then it's 
+    repeated: we don't want it because we already have it. If the value in the package received is 
+    *higher* than expected, then it means a package was jumped over and, because of that, lost - thus 
+    the file transmission has failed */
 
 
     if (package[1] < app_info.sequenceNumber)
