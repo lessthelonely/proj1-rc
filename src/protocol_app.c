@@ -106,7 +106,7 @@ int llopen()
       }
     }
   }
-  return fd;
+  return 0;
 }
 
 int llwrite(u_int8_t *buffer, int length)
