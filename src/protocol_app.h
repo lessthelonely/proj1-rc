@@ -38,4 +38,12 @@ int llclose();
 */
 int create_info_trama(u_int8_t*buffer,u_int8_t*trama,int length,int s_writer);
 
+/**
+    * Function that creates BCC2 by doing the XOR operation with all the components of the info_trama array (that has data).
+     * @param info_trama: array that contains data.
+     * @param BCC2: array to store the value of BCC2.
+     * @param length: size of info_trama array
+*/
+void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
+
 #endif
