@@ -57,6 +57,6 @@ int create_info_trama(u_int8_t*buffer,u_int8_t*trama,int length,int s_writer);
      * @param BCC2: array to store the value of BCC2.
      * @param length: size of info_trama array
 */
-void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length)
+void check_BCC2(u_int8_t * info_trama, u_int8_t* BCC2, int length);
 
 #endif

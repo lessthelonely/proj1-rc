@@ -334,7 +334,6 @@ int llclose() //Don't need any of the arguments in the slides because all the da
       if (read_cmd(&cmd, link_info.fileDescriptor) < 0) //Read DISC
       {
         printf("ERROR\n");
-        continue;
       }
       else
       {
