@@ -8,8 +8,8 @@ struct linkLayer
     unsigned int sequenceNumber;   /*Número de sequência da trama: 0, 1*/
     unsigned int timeout;          /*Valor do temporizador: 1 s*/
     unsigned int numTransmissions; /*Número de tentativas em caso de falha*/
-    int fileDescriptor; /*file descriptor for serial port*/
-    int status; /*TRANSMITTER or RECEIVER*/
+    int fileDescriptor; /*file descriptor para a porta série*/
+    int status; /*TRANSMITTER ou RECEIVER*/
 };
 
 struct linkLayer link_info;
