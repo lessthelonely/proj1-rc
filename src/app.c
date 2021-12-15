@@ -17,7 +17,6 @@ int create_data_package(int n, int length, u_int8_t *data, u_int8_t *package)
     Control packets have two types: 1) symbolizes transmission start
                                     2) symbolizes transmission end
     Contents of each packet->slide 23
-    Packages are sent by TRANSMITTER-->need to make functions to read them? Yeah, probs
     */
     package[0] = CTRL_DATA; //C – campo de controlo (valor: 1 – dados)
     package[1] = n % 255;  
@@ -69,9 +68,9 @@ int create_control_package(u_int8_t c, u_int8_t *file_name, int file_size, u_int
 
 int read_data_package(u_int8_t *data, u_int8_t *package)
 {
-    /*Okay package[0] doesn't matter here, will matter where we call it tho
+    /*
     package[2] & [3] are gonna be used to know the size of the info
-    Rest of the package is gonna be copied into u_int8_t*data because data
+    Rest of the package is gonna be copied into u_int8_t*data
     */
     
     /*app_info.sequenceNumber is where we store the sequence number we are expecting (packet wise).

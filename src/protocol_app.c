@@ -113,8 +113,6 @@ int llwrite(u_int8_t *buffer, int length)
 {
   
 /*Orders protocol to send the Info trauma
-char* buffer is char array we want to transmit so it will the be data part of the info trauma?
-In order to make this function work->need to build the information trama
 F A C BCC1 buffer BCC2 F
 TRANSMITTER is the only one who calls this function
 */

@@ -51,7 +51,7 @@
 #define ESC_FOUND 0x5D  //ESC ^ 0x20
 
 /*
-Values for the variable status from the applicationLayer struct
+Values for the variable status from the linkLayer struct
 */
 #define TRANSMITTER 0
 #define RECEIVER 1
