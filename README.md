@@ -1,6 +1,4 @@
-# Primeiro Projeto de RC
-
-Aplicação de Transferência de Ficheiros entre Computadores com Porta Série
+# Aplicação de Transferência de Ficheiros entre Computadores com Porta Série
 
 ## Contribuidores
 
